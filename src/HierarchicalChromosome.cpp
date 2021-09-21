@@ -382,81 +382,68 @@ Chromosome HierarchicalChromosome::createEqidistantModel(int resolution_bp, stri
 }
 
 void HierarchicalChromosome::toFile(string filename) {
-	std::stringstream out;
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	this->toStringStream(out);
-
-	file << out.str();
-	file.close();
+	FILE *f = open(filename, "w");
+	if (f == NULL) return;
+	toFile(f);
+	fclose(f);
 }
 
-void HierarchicalChromosome::toStringStream(std::stringstream & out) {
-	out << (int)clusters.size() << ' ' << (int)arcs.factors.size() << ' ' << -1 << ' ' << chrs.size() << '\n';
-
-	for (unsigned int i = 0; i < arcs.factors.size(); ++i) out << arcs.factors[i] << ' ';
-	out << '\n';
-
-	for (unsigned int i = 0; i < clusters.size(); ++i) clusters[i].toStringStream(out);
-	
+void HierarchicalChromosome::toFile(FILE* file) {
+	//fprintf(file, "%d %d %d %d\n", clusters.size(), arcs.arcs_cnt, root, arcs.factors.size());
+	fprintf(file, "%d %d %d %d\n", (int)clusters.size(), (int)arcs.factors.size(), -1, (int)chrs.size());
+	for (unsigned int i = 0; i < arcs.factors.size(); ++i) fprintf(file, "%s ", arcs.factors[i].c_str());
+	fprintf(file, "\n");
+	for (unsigned int i = 0; i < clusters.size(); ++i) clusters[i].toFile(file);
 	for (string c: chrs) {
-		out << c << ' ' << chr_root[c] << ' ' << arcs.arcs_cnt[c] << '\n';
-		for (int i = 0; i < arcs.arcs_cnt[c]; ++i) arcs.arcs[c][i].toStringStream(out);
+		fprintf(file, "%s %d %d\n", c.c_str(), chr_root[c], arcs.arcs_cnt[c]);
+		for (int i = 0; i < arcs.arcs_cnt[c]; ++i) arcs.arcs[c][i].toFile(file);
 	}
+
+	//for (int i = 0; i < arcs.arcs_cnt; ++i) {
+	//arcs.arcs[i].toFile(file);
+	//arcs.raw_arcs[i].toFile(file);
+	//}
+	//for (int i = 0; i < top_level_regions.size(); ++i) fprintf(file, "%d ", top_level_regions[i]);
+	//global_chr.toFile(file);
 }
 
 void HierarchicalChromosome::toFilePreviousFormat(string filename) {
-	std::stringstream out;
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
+	FILE *f = open(filename, "w");
+	if (f == NULL) return;
 
 	string chr = chrs[0];
-	out << clusters.size() << ' ' << arcs.arcs[chr].size() << ' ' << chr_root[chr] << ' ' << arcs.factors.size() << '\n';
-
-	for (unsigned int i = 0; i < arcs.factors.size(); ++i) out << arcs.factors[i] << ' ';
-	out << '\n';
-	for (unsigned int i = 0; i < clusters.size(); ++i) clusters[i].toStringStreamPreviousFileFormat(out);
+	fprintf(f, "%lu %lu %d %lu\n", clusters.size(), arcs.arcs[chr].size(), chr_root[chr], arcs.factors.size());
+	//fprintf(f, "%lu %lu %d %lu\n", clusters.size(), arcs.arcs[chr].size(), root_index, arcs.factors.size());
+	for (unsigned int i = 0; i < arcs.factors.size(); ++i) fprintf(f, "%s ", arcs.factors[i].c_str());
+	fprintf(f, "\n");
+	for (unsigned int i = 0; i < clusters.size(); ++i) clusters[i].toFilePreviousFormat(f);
 
 	int n = arcs.arcs[chr].size();
 	InteractionArc *arc;
 	for (int i = 0; i < n; ++i) {
 		arc = &arcs.arcs[chr][i];
-		out << arc->start << ' ' << arc->end << ' ' << arc->score << ' ';
-		out << arc->factor << ' ' << arc->genomic_start << ' ' << arc->genomic_end << " 0 0\n";
+		fprintf(f, "%d %d %d %d %d %d 0 0\n", arc->start, arc->end, arc->score, arc->factor, arc->genomic_start, arc->genomic_end);
 	}
 
-	file << out.str();
-	file.close();
+	fclose(f);
+
+	// there were no chromosomes then!
+	//	for (string c: chrs) {
+	//		fprintf(file, "%s %d %d\n", c.c_str(), chr_root[c], arcs.arcs_cnt[c]);
+	//		for (int i = 0; i < arcs.arcs_cnt[c]; ++i) arcs.arcs[c][i].toFile(file);
+	//	}
+
+	/*
+	 * fprintf(file, "%d %d %d %d\n", clusters.size(), arcs.arcs_cnt, root, arcs.factors.size());
+	for (int i = 0; i < arcs.factors.size(); ++i) fprintf(file, "%s ", arcs.factors[i].c_str());
+	fprintf(file, "\n");
+	for (int i = 0; i < clusters.size(); ++i) clusters[i].toFile(file);
+	 */
 }
 
 void HierarchicalChromosome::fromFile(string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
 
 	// try to decide which format are we dealing with
 	// second value now is n_factors (which is small), before it was n_arcs (which is big).
@@ -464,51 +451,48 @@ void HierarchicalChromosome::fromFile(string filename) {
 	// the number of clusters and arcs (if many clusters (>100) but only a few loops (<5) -> previous mode, otherwise the
 	// 2nd value is the number of factors)
 	int n, n_factors, chrs_cnt, tmp;
-	in_stream >> n >> n_factors >> tmp >> chrs_cnt;
-	in_stream.seekg(0);
-
-	if (n > 100 && n_factors < 5) this->fromStringStream(in_stream);
-	else this->fromStringStreamPreviousFormat(in_stream);
-	
-	file.close();
+	fscanf(f, "%d %d %d %d", &n, &n_factors, &tmp, &chrs_cnt);
+	fseek(f, 0, SEEK_SET);
+	if (n > 100 && n_factors < 5) this->fromFile(f);
+	else this->fromFilePreviousFormat(f);
+	fclose(f);
 }
 
 
-void HierarchicalChromosome::fromStringStream(std::stringstream & in) {
+void HierarchicalChromosome::fromFile(FILE* file) {
 
 	printf("read chromosome\n");
 	clusters.clear();
 	current_level.clear();
 
 	int n, n_factors, chrs_cnt, tmp;
-	in >> n >> n_factors >> tmp >> chrs_cnt;
+	fscanf(file, "%d %d %d %d", &n, &n_factors, &tmp, &chrs_cnt);
 
 	for (int i = 0; i < n_factors; ++i) {
-		std::string str;
-		in >> str;
+		char str[20];
+		fscanf(file, "%s", str);
 		arcs.factors.push_back(str);
 	}
 
 	printf("clusters...\n");
 	for (int i=0; i<n; i++) {
 		Cluster c;
-		c.fromStringStream(in);
+		c.fromFile(file);
 		clusters.push_back(c);
 	}
 
 	printf("chromosomes...\n");
 	int n_arcs, root_ind;
 	for (int i = 0; i < chrs_cnt; ++i) {
-		std::string str;
-		in >> str >> root_ind >> n_arcs;
-		
-		std::cout << str << "...\n";
+		char str[8];
+		fscanf(file, "%s %d %d", str, &root_ind, &n_arcs);
+		printf("%s...\n", str);
 		chrs.push_back(str);
 		chr_root[str] = root_ind;
 
 		for (int j = 0; j < n_arcs; ++j) {
 			InteractionArc arc;
-			arc.fromStringStream(in);
+			arc.fromFile(file);
 			arcs.arcs[str].push_back(arc);
 
 			if (arc.start != -1 && arc.end != -1) {
@@ -532,22 +516,22 @@ void HierarchicalChromosome::fromStringStream(std::stringstream & in) {
 	useTopLevel();
 }
 
-void HierarchicalChromosome::fromStringStreamPreviousFormat(std::stringstream & in) {
+void HierarchicalChromosome::fromFilePreviousFormat(FILE* file) {
 
 	printf("old format detected\n");
 	clusters.clear();
 	current_level.clear();
 
 	int n, n_arcs, n_factors, root;
-	in >> n >> n_arcs >> root >> n_factors;
+	fscanf(file, "%d %d %d %d", &n, &n_arcs, &root, &n_factors);
 
 	chrs.push_back("chr");
 	chr_root["chr"] = root;
 
 	printf("factors\n");
 	for (int i = 0; i < n_factors; ++i) {
-		std::string str;
-		in >> str;
+		char str[20];
+		fscanf(file, "%s", str);
 		arcs.factors.push_back(str);
 	}
 
@@ -555,14 +539,13 @@ void HierarchicalChromosome::fromStringStreamPreviousFormat(std::stringstream & 
 	int st, end, gpos, tmp;
 	float x, y, z;
 	int children_cnt;
-
 	for (int i=0; i<n; i++) {
 		Cluster c;
 		//c.fromFile(file);
-		in >> gpos >> st >> end >> x >> y >> z >> children_cnt;
+		fscanf(file, "%d %d %d %f %f %f %d", &gpos, &st, &end, &x, &y, &z, &children_cnt);
 
 		for (int i = 0; i < children_cnt; ++i) {
-			in >> tmp;
+			fscanf(file, "%d", &tmp);
 			c.children.push_back(tmp);
 		}
 
@@ -578,12 +561,10 @@ void HierarchicalChromosome::fromStringStreamPreviousFormat(std::stringstream & 
 	//int st, end, score, factor;
 	printf("arcs\n");
 	int score_raw, factor_raw;
-
 	for (int i = 0; i < n_arcs; ++i) {
 		InteractionArc arc;
-
-		in >> arc.start >> arc.end >> arc.score >> arc.factor;
-		in >> arc.genomic_start >> arc.genomic_end >> score_raw >> factor_raw;
+		fscanf(file, "%d %d %d %d", &arc.start, &arc.end, &arc.score, &arc.factor);
+		fscanf(file, "%d %d %d %d", &arc.genomic_start, &arc.genomic_end, &score_raw, &factor_raw);
 
 		arc.eff_score = arc.score;
 
@@ -597,19 +578,10 @@ void HierarchicalChromosome::fromStringStreamPreviousFormat(std::stringstream & 
 	arcs.arcs_cnt["chr"] = n_arcs;
 }
 
-bool HierarchicalChromosome::fromHiCEvo(std::string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return false;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+bool HierarchicalChromosome::fromHiCEvo(string filename) {
+	printf("read chromosome from HiC-evo\n");
+	FILE *f = open(filename, "r");
+	if (f == NULL) return false;
 
 	clusters.clear();
 	current_level.clear();
@@ -619,17 +591,19 @@ bool HierarchicalChromosome::fromHiCEvo(std::string filename) {
 	string chr_name = "chr";
 	chrs.push_back(chr_name);
 	chr_root[chr_name] = 0;
+	//this->
 
 	arcs.arcs_cnt[chr_name] = 0;
 
-	int n, tmp, start, end, par, n_child;
+	int n;
+	//fscanf(file, "%d %d %d %d", &n, &n_factors, &root_index, &chrs_cnt);
+	fscanf(f, "%d", &n);		// # of regions
+
+	int tmp, start, end, par, n_child;
 	float x, y, z;
-
-	in_stream >> n;		// # of regions
-
 	for (int i=0; i<n; i++) {
-		in_stream >> start >> end >> par >> x >> y >> z >> n_child;
 
+		fscanf(f, "%d %d %d %f %f %f %d", &start, &end, &par, &x, &y, &z, &n_child);
 		Cluster c(start, end);
 		c.pos.x = x;
 		c.pos.y = y;
@@ -637,14 +611,20 @@ bool HierarchicalChromosome::fromHiCEvo(std::string filename) {
 		c.parent = par;
 
 		for (int j = 0; j < n_child; ++j) {
-			in_stream >> tmp;
+			fscanf(f, "%d", &tmp);
 			c.children.push_back(tmp);
 		}
 
+		//c.print();
 		clusters.push_back(c);
 	}
 
-	file.close();
+	fclose(f);
+
+	//	for (int i = 0; i < clusters.size(); ++i) {
+	//		for (int j = 0; j < clusters[i].children.size(); ++j) clusters[clusters[i].children[j]].parent = i;
+	//	}
+
 	current_level.clear();
 	current_level[chr_name].push_back(0);
 	return true;
@@ -652,19 +632,8 @@ bool HierarchicalChromosome::fromHiCEvo(std::string filename) {
 
 bool HierarchicalChromosome::fromTxt(string filename) {
 	printf("read chromosome from txt\n");
-
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return false;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
+	if (f == NULL) return false;
 
 	clusters.clear();
 	current_level.clear();
@@ -680,7 +649,7 @@ bool HierarchicalChromosome::fromTxt(string filename) {
 	int n;
 	float x, y, z;
 
-	in_stream >> n;		// # of regions
+	fscanf(f, "%d", &n);		// # of regions
 
 	Cluster root(1000, 1000*n+100);
 	root.children.push_back(1);
@@ -692,8 +661,7 @@ bool HierarchicalChromosome::fromTxt(string filename) {
 	clusters.push_back(root_chr);
 
 	for (int i=0; i<n; i++) {
-		in_stream >> x >> y >> z;
-		
+		fscanf(f, "%f %f %f", &x, &y, &z);
 		Cluster c(1000*(i+1), 1000*(i+1)+100);
 		c.pos.x = x;
 		c.pos.y = y;
@@ -702,7 +670,7 @@ bool HierarchicalChromosome::fromTxt(string filename) {
 		clusters.push_back(c);
 	}
 
-	file.close();
+	fclose(f);
 
 	current_level.clear();
 	current_level[chr_name].push_back(0);

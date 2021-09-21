@@ -10,9 +10,6 @@
 
 #include <string.h>
 #include <vector>
-#include <fstream> 
-#include <sstream>
-#include <iostream>
 #include "Chromosome.h"
 
 class ChromosomesSet {
@@ -25,8 +22,9 @@ public:
 	void add(std::map<std::string, Chromosome> chr, string desc);
 
 	void toFile(string filename);
+	void toFile(FILE *file);
 	void fromFile(string filename);
-	void fromStringStream(std::stringstream & in);
+	void fromFile(FILE* file);
 
 	std::vector<std::map<std::string, Chromosome> > chromosome;
 	std::vector<string> desc;

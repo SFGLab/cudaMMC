@@ -11,37 +11,25 @@ BedRegions::BedRegions() {
 }
 
 void BedRegions::fromFile(std::string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
+	FILE *f;
+	f = fopen(filename.c_str(), "r");
+	if (f == NULL) {
+		printf("Error opening file [%s]!\n", filename.c_str());
 		return;
 	}
 
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
-
-	std::string chr;
+	char chr[16], line[100];
 	int start, end;
 
-	while (!in_stream.eof()) {
-		in_stream >> chr >> start >> end;
+	while (!feof(f)) {
+		if (fscanf(f, "%s %d %d", chr, &start, &end) != 3) continue;
+		//printf("%s %d %d\n", chr, start, end);
+		fgets(line, 100, f);		// read to the end of line
 
-		if (in_stream.fail()) {
-            in_stream.clear();
-            in_stream.ignore(100, '\n');
-            continue;
-        }
-
-		in_stream.ignore(100, '\n');	// read to the end of line
-
-		BedRegion b (chr, start, end);
+		BedRegion b((std::string)chr, start, end);
 		regions.push_back(b);
 	}
-	file.close();
+	fclose(f);
 }
 
 void BedRegions::print() {

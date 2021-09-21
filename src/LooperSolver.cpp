@@ -6,8 +6,6 @@
  */
 
 #include "../include/LooperSolver.h"
-#include <fstream> 
-#include <sstream>
 
 LooperSolver::LooperSolver(string label, string outdir) {
 
@@ -623,14 +621,16 @@ void LooperSolver::setContactData(std::vector<string> chrs_list, BedRegion regio
 		for (uint i = 0; i < factors.size(); ++i) arcs.loadPetClustersData(arcs_clusters[i], factors[i], segments_predefined);
 
 		printf(" mark arcs\n");
-		arcs.markArcs(false);	// create cluster-indexed arcs
+		// arcs.markArcs(false);	// create cluster-indexed arcs
+		arcs.parallelMarkArcs(false);
 
 		arcs.removeEmptyAnchors();
 
 		if (Settings::rewiringEnabled) arcs.rewire();
 
 		printf(" mark arcs (again)\n");
-		arcs.markArcs(true);
+		// arcs.markArcs(true);
+		arcs.parallelMarkArcs(true);
 
 		if (Settings::useInputCache) arcs.toFile(input_file);
 	}
@@ -1142,6 +1142,9 @@ Heatmap LooperSolver::createSingletonHeatmap(int diag) {
 
 	char chr1[10], chr2[10];
 	int sta, stb, enda, endb, sc;
+	char buf_tmp[1024];
+
+	FILE *f = NULL;
 
 	vector<std::string> singleton_files;
 	singleton_files.insert(singleton_files.end(), arcs_singletons.begin(), arcs_singletons.end());
@@ -1160,27 +1163,15 @@ Heatmap LooperSolver::createSingletonHeatmap(int diag) {
 	for (uint fi = 0; fi < singleton_files.size(); ++fi) {
 		printf("\nread [%s]\n", singleton_files[fi].c_str());
 
-		std::ifstream file;
-		file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+		f = open(singleton_files[fi].c_str(), "r");
+		if (!f) error("could not read the file!");
 
-		try {
-			file.open(singleton_files[fi]);
-		} catch(const std::ifstream::failure &ex) {
-			std::cerr << "Error opening file: " << singleton_files[fi] << std::endl;
-			exit(1);
-		}
-
-		std::string full_input(std::istreambuf_iterator<char>{file}, {});
-		std::stringstream in_stream(full_input);
-
-		// find size of file
 		int cnt_arcs_ok = 0;  // number of arcs added
 		int cnt_arcs_diag = 0;  // number of arcs that fall on the diagonal
 		int cnt_arcs_bad_chr = 0; // number of arcs on other chromosomes (not specified with -c or chrM)
 		int cnt_lines_err = 0;  // number of lines that could not be read
 		int k = 0;
-
-		while (!in_stream.eof()) {
+		while (!feof(f)) {
 			if (k++ % 1000000 == 0) printf(".");
 
 			// * there are several possible formats of files, e.g.:
@@ -1189,20 +1180,15 @@ Heatmap LooperSolver::createSingletonHeatmap(int diag) {
 			// 3: chr6	34306237	34306388	chrX	109134352	109134456	1	+	+
 			// we read first 7 column, and then fgets() to reach the end of line
 
-			in_stream >> chr1 >> sta >> stb >> chr2 >> enda >> endb >> sc;
-
-			if (in_stream.fail()) {
+			int args_read = fscanf(f, "%s %d %d %s %d %d %d", chr1, &sta, &stb, chr2, &enda, &endb, &sc);
+			if (args_read < 7) {
 				// this is usually true only for the last line in the file, if it is empty
 				// reporting that as an error may be misleading, so only report non-cmoplete and non-empty lines
-				if (!in_stream.eof()) cnt_lines_err++;
-				else break;
-
-				in_stream.clear();
-            	in_stream.ignore(1024, '\n');
-            	continue;
+				if (args_read > 0) cnt_lines_err++;
+				continue;
 			}
 
-			in_stream.ignore(1024, '\n');
+			fgets(buf_tmp, 1024, f);
 
 			// check whether we should process current chromosomes
 			if (chrs_set.find(chr1) == chrs_set.end() || chrs_set.find(chr2) == chrs_set.end()) {
@@ -1239,13 +1225,15 @@ Heatmap LooperSolver::createSingletonHeatmap(int diag) {
 
 			if (st == -1 || end == -1) {
 				printf("non matching arc! %d %d  (%d %d)\n", st, end, sta, enda);
-				exit(1);
+				exit(0);
 			}
 
 			if (st == end) {
 				cnt_arcs_diag++;
 				continue;   // ignore diagonal
 			}
+
+			//printf("%d %d  %d %d  %s %s   %d %d\n", sta, stb, enda, endb, chr1, chr2, st, end);
 
 			// update min/max position for chromosomes
 			chr_max_pos[chr1] = max(chr_max_pos[chr1], stb);
@@ -1260,7 +1248,7 @@ Heatmap LooperSolver::createSingletonHeatmap(int diag) {
 			cnt_arcs_ok++;
 		}
 
-		file.close();
+		fclose(f);
 
 		printf("\n%d interactions added, ignored %d (bad chr) and %d (diagonal)", cnt_arcs_ok, cnt_arcs_bad_chr, cnt_arcs_diag);
 		if (cnt_lines_err > 0) printf(", failed to read %d lines", cnt_lines_err);
@@ -1382,6 +1370,8 @@ void LooperSolver::createSingletonSubanchorHeatmap(string chr, vector<int> &anch
 	char chr1[10], chr2[10];
 	int st, end;
 	int sta, stb, enda, endb, st_pos, end_pos, sc;
+	char buf_tmp[1024];
+	FILE *f = NULL;
 
 	for (size_t fi = 0; fi < arcs_singletons.size(); ++fi) {
 		// ignore files with inter contacts (for anchor level we need intra only)
@@ -1393,23 +1383,17 @@ void LooperSolver::createSingletonSubanchorHeatmap(string chr, vector<int> &anch
 		else file_chr = arcs_singletons[fi];
 		printf("read [%s]\n", file_chr.c_str());
 
-		std::ifstream file;
-		file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-		try {
-			file.open(file_chr);
-		} catch(const std::ifstream::failure &ex) {
+		f = open(file_chr.c_str(), "r");
+		if (!f) {
 			if (Settings::dataSplitSingletonFilesByChr) error("No chromosome-splitted file found!");
 			error("could not read the file!");
 		}
 
-		std::string full_input(std::istreambuf_iterator<char>{file}, {});
-		std::stringstream in_stream(full_input);
 		int cnt_arcs_ok = 0;  // number of arcs added
 		int cnt_arcs_diag = 0;  // number of arcs that fall on the diagonal
 		int cnt_lines_err = 0;  // number of lines that could not be read
 
-		while (!in_stream.eof()) {
+		while (!feof(f)) {
 
 			// * there are several possible formats of files, e.g.:
 			// 1: chr9	77361535	77361615	chr9	78624184	78624253	1
@@ -1417,16 +1401,12 @@ void LooperSolver::createSingletonSubanchorHeatmap(string chr, vector<int> &anch
 			// 3: chr6	34306237	34306388	chrX	109134352	109134456	1	+	+
 			// we read first 7 column, and then fgets() to reach the end of line
 
-			in_stream  >> chr1 >> sta >> stb >> chr2 >> enda >> endb >> sc;
-
-			if (in_stream.fail()) {
-				in_stream.clear();
-				in_stream.ignore(100, '\n');
+			if (fscanf(f, "%s %d %d %s %d %d %d", chr1, &sta, &stb, chr2, &enda, &endb, &sc) < 7) {
 				cnt_lines_err++; // something went wrong (possibly empty last line in a file)
 				continue;
 			}
 
-			in_stream.ignore(1024, '\n');
+			fgets(buf_tmp, 1024, f);
 
 			st_pos = (sta + stb) / 2;
 			end_pos = (enda + endb) / 2;
@@ -1461,7 +1441,7 @@ void LooperSolver::createSingletonSubanchorHeatmap(string chr, vector<int> &anch
 			cnt_arcs_ok++;
 		}
 
-		file.close();
+		fclose(f);
 		printf("%d interactions added, %d ignored (diagonal); failed to read %d lines\n", cnt_arcs_ok, cnt_arcs_diag, cnt_lines_err);
 	}
 
@@ -2522,7 +2502,6 @@ void LooperSolver::reconstructClusterArcsDistances(int cluster, int cluster_ind,
 		//}
 		//else
 
-		// score = smooth ? MonteCarloArcsSmooth(noise_size, use_subanchor_heatmap) : parallelMonteCarloArcs(noise_size);
 		score = smooth ? MonteCarloArcsSmooth(noise_size, use_subanchor_heatmap) : MonteCarloArcs(noise_size);
 
 		output(3, "score = %lf, best = %lf\n", score, best_score);
@@ -3198,30 +3177,14 @@ void LooperSolver::calcAnchorsStats() {
 	for (size_t i = 0; i < arcs_singletons.size(); ++i) {
 		printf("\nread [%s]\n", arcs_singletons[i].c_str());
 
-		std::ifstream file;
-		file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-		try {
-			file.open(arcs_singletons[i]);
-		} catch(const std::ifstream::failure &ex) {
-			std::cerr << "Error opening file: " << arcs_singletons[i] << std::endl;
-			exit(1);
-		}
-
-		std::string full_input(std::istreambuf_iterator<char>{file}, {});
-		std::stringstream in_stream(full_input);
+		FILE *f = open(arcs_singletons[i].c_str(), "r");
+		if (!f) exit(0);
 
 		int k = 0;
-		while (!in_stream.eof()) {
+		while (!feof(f)) {
 			if (k++ % 1000000 == 0) printf(".");
 
-			in_stream  >> chr1 >> sta >> stb >> chr2 >> enda >> endb >> sc;
-
-			if (in_stream.fail()) {
-				in_stream.clear();
-				in_stream.ignore(100, '\n');
-				continue;
-        	}
+			if (fscanf(f, "%s %d %d %s %d %d %d", chr1, &sta, &stb, chr2, &enda, &endb, &sc) < 7) continue;
 
 			// check whether we should process current chromosomes
 			if (chrs_set.find(chr1) == chrs_set.end()) continue;
@@ -3298,7 +3261,7 @@ void LooperSolver::calcAnchorsStats() {
 			else inter_loops++;
 		}
 
-		file.close();
+		fclose(f);
 	}
 
 	printf("between segments: %d\n", between_segments);

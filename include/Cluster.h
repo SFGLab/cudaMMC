@@ -5,13 +5,11 @@
  *      Author: psz
  */
 
-#pragma once
+#ifndef CLUSTER_H_
+#define CLUSTER_H_
 
 #include <stdio.h>
 #include <vector>
-#include <fstream> 
-#include <sstream>
-#include <iostream>
 
 #include "InteractionArc.h"
 #include "../src/lib/common.h"
@@ -24,13 +22,9 @@ public:
 	void init();
 	void print();
 
-	void toFile(std::ofstream & file);
-	void toFilePreviousFormat(std::ofstream & file);
-	void fromFile(std::ifstream & file);
-
-	void toStringStream(std::stringstream & out);
-	void toStringStreamPreviousFileFormat(std::stringstream & out);
-	void fromStringStream(std::stringstream & in);
+	void toFile(FILE *file);
+	void toFilePreviousFormat(FILE *file);
+	void fromFile(FILE* file);
 
 	bool contains(int genomic_pos);	// check if a genomic position is contained in a given cluster
 
@@ -52,3 +46,5 @@ public:
 	bool is_fixed;
 	double dist_to_next;
 };
+
+#endif /* CLUSTER_H_ */

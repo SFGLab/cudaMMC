@@ -358,96 +358,61 @@ vector<float> Heatmap::toVector(int diag) {
 	return r;
 }
 
-void Heatmap::toFile(string filename, bool total_count, bool zero_diagonal, bool as_integers) {
-	std::stringstream out_stream;
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
+void Heatmap::toFile(string filename, bool total_count, bool zero_diagonal, bool as_integers)
+{
+	FILE *f = open(filename, "w");
 
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	if (total_count) out_stream << size << '\n';
-
+	if (total_count) fprintf(f, "%lu\n", size);
 	float val;
-
 	for (size_t i = 0; i < size; ++i) {
 		for (size_t l = 0; l < size; ++l) {
 			val = v[i][l];
 			if (i==l && zero_diagonal) val = 0.0f;
-
-			if (as_integers) out_stream << (int)val << ' ';
-			else out_stream << val << ' ';
+			if (as_integers) fprintf(f, "%d ", (int)val);
+			else fprintf(f, "%f ", val);
 		}
-		out_stream << '\n';
+		fprintf(f, "\n");
 	}
 
-	file << out_stream.str();
-	file.close();
+	fclose(f);
 }
 
 void Heatmap::fromFile(string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
 
 	char line[64];
-	in_stream.getline(line, 64);
-	if (in_stream.fail()) return;
-
+	if (fgets(line, 64, f) == NULL) return;
 	int args = countWords(line);
 
-	in_stream.seekg(0);
+	fseek(f, 0, 0);
 
 	int n;
 
 	if (args == 1) {
-		in_stream >> n;
+		fscanf(f, "%d", &n);
 	}
 	else if (args == 3) {
-		in_stream >> n >> start >> resolution;
+		fscanf(f, "%d %d %d", &n, &start, &resolution);
 	}
 	else {
 		printf("Unrecognized heatmap header: [%s]\n", line);
-		exit(1);
+		exit(0);
 	}
 
 	init(n);
 	for (size_t i = 0; i < size; ++i) {
 		for (size_t l = 0; l < size; ++l) {
-			in_stream >> v[i][l];
+			fscanf(f, "%f", &v[i][l]);
 		}
 	}
-	file.close();
+	fclose(f);
 
 	diagonal_size = getDiagonalSize();
 }
 
 void Heatmap::fromFile(string filename, bool labels) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
 
 	int word_cnt = 0;
 	size_t ir = 0, ic = 0;
@@ -458,15 +423,17 @@ void Heatmap::fromFile(string filename, bool labels) {
 	int p = 0;
 	float val;
 
-	while (true) {
-		in_stream.getline(line, 4096);
-		if (in_stream.fail()) break;
+	while (1) {
 
+		if (fgets(line, 4096, f) == NULL) break;
+
+		//printf("\nline = %d %d %s\n", ir, ic, line);
 		p = 0;
 		ic = 0;
 
 		for (size_t i = 0; i < strlen(line); ++i) {
 			c = line[i];
+			//printf("[%d, %c]\n", i, c);
 
 			if (c == ' ' || c == '\t' || c == '\n') {
 				if (p > 0) {
@@ -506,37 +473,25 @@ void Heatmap::fromFile(string filename, bool labels) {
 		if (ir > size) break;
 	}
 
-	file.close();
+	fclose(f);
 }
 
 void Heatmap::fromMDS(string filename, int size) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
 
 	init(size);
 
 	// ignore 3 first lines
-	for (int i = 0; i < 4; ++i) in_stream.ignore(64, '\n');
+	char line[64];
+	for (int i = 0; i < 4; ++i) fgets(line, 64, f);
 
 	float val;
 	int num = (size-1) * size / 2;
 	int row = 0, col = 1;
 	for (int i = 0; i < num; ++i) {
-
-		int tmp;
-		for (int j = 0; j < 4; ++j) in_stream >> tmp;	// ignore first 4 integers
-		in_stream >> val;
-
+		fscanf(f, "%*d %*d %*d %*d %f", &val);
+		//printf("%d %f    %d %d\n", i, val, row, col);
 		v[row][col] = v[col][row] = val;
 		col++;
 		if (col >= size) {
@@ -545,6 +500,4 @@ void Heatmap::fromMDS(string filename, int size) {
 			if (row >= size) break; // just to make sure
 		}
 	}
-
-	file.close();
 }

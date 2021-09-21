@@ -30,26 +30,12 @@ void InteractionArc::init() {
 	factor = -1;
 }
 
-void InteractionArc::toFile(std::ofstream & file) {
-	std::stringstream out;
-	this->toStringStream(out);
-	file << out.str();
+void InteractionArc::toFile(FILE *file) {
+	fprintf(file, "%d %d %d %d %d %d %d\n", start, end, genomic_start, genomic_end, score, eff_score, factor);
 }
 
-void InteractionArc::fromFile(std::ifstream & file) {
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
-
-	this->fromStringStream(in_stream);
-}
-
-void InteractionArc::toStringStream(std::stringstream & out) {
-	out << start << ' ' << end << ' ' << genomic_start << ' ' << genomic_end << ' ';
-	out << score << ' ' << eff_score << ' ' << factor << '\n';
-}
-
-void InteractionArc::fromStringStream(std::stringstream & in) {
-	in >> start >> end >> genomic_start >> genomic_end >> score >> eff_score >> factor;
+void InteractionArc::fromFile(FILE* file) {
+	fscanf(file, "%d %d %d %d %d %d %d", &start, &end, &genomic_start, &genomic_end, &score, &eff_score, &factor);
 }
 
 int InteractionArc::length() {

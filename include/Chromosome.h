@@ -10,9 +10,6 @@
 
 #include <string.h>
 #include <vector>
-#include <iostream>
-#include <sstream>
-#include <fstream>
 
 #include <locale>
 
@@ -34,9 +31,9 @@ public:
 	void print();
 
 	void toFile(string filename);
-	void toStringStream(std::stringstream & out);
+	void toFile(FILE *file);
 	void fromFile(string filename);
-	void fromStringStream(std::stringstream & in, int pts_cnt = 0);
+	void fromFile(FILE* file, int pts_cnt = 0);
 	void fromFilePDB(string filename);
 
 	void createRandom(int pts_cnt, float size = 0.1f, bool walk = true);

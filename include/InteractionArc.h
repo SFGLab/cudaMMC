@@ -10,9 +10,6 @@
 
 #include <stdio.h>
 #include <string>
-#include <fstream> 
-#include <sstream>
-#include <iostream>
 
 /*
  * class representing an interaction between two genomic regions.
@@ -35,10 +32,8 @@ public:
 	InteractionArc();
 	InteractionArc(int start, int end, int score, int factor=-1);
 
-	void toFile(std::ofstream & file);
-	void fromFile(std::ifstream & file);
-	void toStringStream(std::stringstream & out);
-	void fromStringStream(std::stringstream & in);
+	void toFile(FILE *file);
+	void fromFile(FILE* file);
 
 	void init();
 	void print();

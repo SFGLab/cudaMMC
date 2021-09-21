@@ -9,11 +9,16 @@
 #define INTERACTIONARCS_H_
 
 #include <stdio.h>
+#include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
+#include <numeric>
 
 #include "../src/lib/common.h"
 #include "Anchor.h"
@@ -40,6 +45,7 @@ public:
 
 	// update arcs to use anchor indicies rather than genomic position. input: 'anchors' and 'raw_arcs', output: 'arcs'
 	void markArcs(bool ignore_missing);
+	void parallelMarkArcs(bool ignore_missing);
 
 	// because we filter long arcs there may be anchors without any arcs. this function removes such anchors
 	// (should be called after marcArcs(), and then marcArcs() should be called again to update arcs information)
@@ -52,14 +58,14 @@ public:
 	std::vector<string> factors;	// list of factors used
 
 	// for each chromosome keep number of anchors and arcs
-	std::map<string, int> anchors_cnt;
-	std::map<string, int> arcs_cnt;
+	std::unordered_map<string, int> anchors_cnt;
+	std::unordered_map<string, int> arcs_cnt;
 
-	std::map<string, std::vector<Anchor> > anchors;
-	std::map<string, std::vector <InteractionArc> > arcs;		// list of arcs representing contacts (as indices for 'points')
-	std::map<string, std::vector <InteractionArc> > raw_arcs;	// list of raw arcs representing contacts (as genomic positions)
+	std::unordered_map<string, std::vector<Anchor> > anchors;
+	std::unordered_map<string, std::vector <InteractionArc> > arcs;		// list of arcs representing contacts (as indices for 'points')
+	std::unordered_map<string, std::vector <InteractionArc> > raw_arcs;	// list of raw arcs representing contacts (as genomic positions)
 
-	std::map<string, std::vector <InteractionArc> > long_arcs;	// list of long arcs (>pet_max_length), used to refine the segment level heatmap
+	std::unordered_map<string, std::vector <InteractionArc> > long_arcs;	// list of long arcs (>pet_max_length), used to refine the segment level heatmap
 
 	std::vector <float> expected_distances;
 

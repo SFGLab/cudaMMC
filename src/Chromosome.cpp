@@ -35,6 +35,32 @@ void Chromosome::scale(float scale, bool center) {
 	}
 }
 
+void Chromosome::fromFile(string filename) {
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
+
+	int pts_cnt = 0;
+
+	char line[32];
+	if (fgets(line, 32, f) == NULL) return;
+	fseek(f, 0, 0);
+
+	int args = countWords(line);
+	if (args == 1) {
+		fscanf(f, "%d", &pts_cnt);
+		this->fromFile(f, pts_cnt);
+	}
+	else if (args == 3) {
+		this->fromFile(f, -1);
+	}
+	else {
+		fclose(f);
+		error("Unrecognized format. First line should contain the size or 3D coordinates");
+	}
+
+	fclose(f);
+}
+
 float Chromosome::findBestAlignmentRotation(const Chromosome &chr, int steps, vector3 &angle, float max_angle) {
 	float step = max_angle / (steps-1);
 	float d_ang = max_angle / -2.0f;
@@ -420,54 +446,32 @@ void Chromosome::trim(int start, int end) {
 	}
 }
 
-void Chromosome::toFile(std::string filename) {
-	std::stringstream out_stream;
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
+void Chromosome::toFile(string filename) {
+	FILE *f;
+	f = open(filename, "w");
+	if (f == NULL) return;
 
 	if (size > 0) {
-		out_stream << size;
-		this->toStringStream(out_stream);
+		fprintf(f, "%d\n", size);
+		this->toFile(f);
 	}
 	else {
-		out_stream << "0";
+		fprintf(f, "0");
 	}
 
-	file << out_stream.str();
-	file.close();
+	fclose(f);
 }
 
-void Chromosome::toStringStream(std::stringstream & out_stream) {
+void Chromosome::toFile(FILE* file) {
 	for (int i=0; i<size; i++) {
-		out_stream << points[i].x << ' ' << points[i].y << ' ' << points[i].z;
-
-		if (genomic_position.size() > i) {
-			out_stream << ' ' << genomic_position[i];
-		}
-		out_stream << '\n';
+		if (genomic_position.size() > i) fprintf(file, "%f %f %f %d\n", points[i].x, points[i].y, points[i].z, genomic_position[i]);
+		else fprintf(file, "%f %f %f\n", points[i].x, points[i].y, points[i].z);
 	}
 }
 
 void Chromosome::fromFilePDB(string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
 
 	int i;
 	init();
@@ -475,12 +479,12 @@ void Chromosome::fromFilePDB(string filename) {
 	char line[4096];
 	char word[8];
 
-	while (!in_stream.eof()) {
+	while (1) {
 
-		in_stream.getline(line, 4096);
-		if (!in_stream.good()) break;
+		if (fgets(line, 4096, f) == NULL) break;
 
 		if (strncmp(line, "ATOM", 4) != 0) continue;
+		//printf("line = [%s]", line);
 
 		float x, y, z;
 		for (i = 0; i < 5; ++i) word[i] = line[33 + i];
@@ -493,78 +497,26 @@ void Chromosome::fromFilePDB(string filename) {
 		points.push_back(vector3(x, y, z));
 	}
 
-	file.close();
+	fclose(f);
 }
 
-void Chromosome::fromFile(string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+void Chromosome::fromFile(FILE* file, int pts_cnt) {
 
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
-
-	int pts_cnt = 0;
-
-	char line[32];
-	in_stream.getline(line, 32);
-	if (!in_stream.good()) return;
-	in_stream.seekg(0);
-
-	int args = countWords(line);
-	if (args == 1) {
-		in_stream >> pts_cnt;
-		this->fromStringStream(in_stream, pts_cnt);
-	}
-	else if (args == 3) {
-		this->fromStringStream(in_stream, -1);
-	}
-	else {
-		file.close();
-		error("Unrecognized format. First line should contain the size or 3D coordinates");
-	}
-
-	file.close();
-}
-
-void Chromosome::fromStringStream(std::stringstream & in, int pts_cnt) {
 	init();
-
-	if (pts_cnt < 0) {     // unknown length
+	if (pts_cnt < 0) {
+		// unknown length
 		double x, y, z;
-		while (!in.eof()) {
-			in >> x >> y >> z;
-
-			if (in.fail()) {
-				in.clear();
-				in.ignore(1024, '\n');
-				continue;
-        	}
-
-			points.push_back(vector3(x, y, z));
+		while (!feof(file)) {
+			if (fscanf(file, "%lf %lf %lf", &x, &y, &z) == 3) points.push_back(vector3(x, y, z));
 		}
 		size = points.size();
 	}
 	else {
-		if (pts_cnt == 0) in >> pts_cnt;
+		if (pts_cnt == 0) fscanf(file, "%d", &pts_cnt);
 
 		float x, y, z;
-
 		for (int i=0; i<pts_cnt; i++) {
-			in >> x >> y >> z;
-
-			if (in.fail()) {
-				in.clear();
-				in.ignore(1024, '\n');
-				continue;
-        	}
-
+			fscanf(file, "%f %f %f", &x, &y, &z);
 			points.push_back(vector3(x, y, z));
 		}
 		size = pts_cnt;

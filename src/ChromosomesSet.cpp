@@ -33,70 +33,59 @@ void ChromosomesSet::add(std::map<std::string, Chromosome> chr, string desc) {
 
 
 void ChromosomesSet::toFile(string filename) {
-	std::stringstream out;
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
+	FILE *f;
+	f = fopen(filename.c_str(), "w");
+	if (f == NULL)
+	{
+		printf("Error opening file [%s]!\n", filename.c_str());
 		return;
 	}
 
-	out << chromosome.size() << '\n';
+	toFile(f);
 
-	for (size_t i=0; i < chromosome.size(); i++) {
-		out << chromosome[i].size() << ' ' << desc[i] << '\n';
+	fclose(f);
+}
 
+void ChromosomesSet::toFile(FILE* file) {
+	//printf("set = %d\n", chromosome.size());
+	fprintf(file, "%lu\n", chromosome.size());
+	for (size_t i=0; i<chromosome.size(); i++) {
+		//fprintf(file, "%d\n%s\n", chromosome[i].points.size(), desc[i].c_str());
+		fprintf(file, "%lu %s\n", chromosome[i].size(), desc[i].c_str());
 		for (auto el: chromosome[i]) {
-			out << el.first << ' ' << el.second.points.size() << '\n';
-			el.second.toStringStream(out);
+			fprintf(file, "%s %lu\n", el.first.c_str(), el.second.points.size());
+			el.second.toFile(file);
+			//chromosome[i].toFile(file);
 		}
 	}
-
-	file << out.str();
-	file.close();
 }
 
 void ChromosomesSet::fromFile(string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
-
-	fromStringStream(in_stream);
-	
-	file.close();
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
+	fromFile(f);
+	fclose(f);
 }
 
-void ChromosomesSet::fromStringStream(std::stringstream & in) {
+void ChromosomesSet::fromFile(FILE* file) {
 	chromosome.clear();
 
 	char de[100], str_chr[10];
 	int n, n_chr;
-	in >> n;
+	fscanf(file, "%d", &n);
 
 	int pts;
 	for (int i=0; i<n; i++) {
-		in >> n_chr >> de;
-		desc.push_back(std::string(de));
+		fscanf(file, "%d %100s", &n_chr, de);
+		string s(de);
+		desc.push_back(s);
 
 		std::map<std::string, Chromosome> map_chr;
 		for (int j = 0; j < n_chr; ++j) {
-			in >> str_chr >> pts;
-
+			fscanf(file, "%s %d", str_chr, &pts);
 			Chromosome chr;
-			chr.fromStringStream(in, pts);
-
+			chr.fromFile(file, pts);
+			//chromosome.push_back(chr);
 			map_chr[str_chr] = chr;
 		}
 

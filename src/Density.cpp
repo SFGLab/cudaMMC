@@ -187,18 +187,9 @@ bool Density::isInside(int x, int y, int z) {
 
 
 void Density::fromSegmentationFile(string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
 
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
 
 	int x, y, z;
 	float d;
@@ -212,10 +203,8 @@ void Density::fromSegmentationFile(string filename) {
 	range_z_end = 0;
 	range_d_end = 0.0f;
 
-	while (!in_stream.eof()) {
-		in_stream >> x >> y >> z >> d;
-		if (in_stream.fail()) break;
-
+	while (!feof(f)) {
+		if (fscanf(f, "%d %d %d %f", &x, &y, &z, &d) != 4) break;
 		range_x_start = min(x, range_x_start);
 		range_x_end = max(x, range_x_end);
 		range_y_start = min(y, range_y_start);
@@ -234,11 +223,10 @@ void Density::fromSegmentationFile(string filename) {
 
 	print();
 
-	in_stream.seekg(0);
+	fseek(f, 0, SEEK_SET);
 
-	while (!in_stream.eof()) {
-		in_stream >> x >> y >> z >> d;
-		if (in_stream.fail()) break;
+	while (!feof(f)) {
+		if (fscanf(f, "%d %d %d %f", &x, &y, &z, &d) != 4) break;
 
 		x -= range_x_start;
 		y -= range_y_start;
@@ -252,52 +240,32 @@ void Density::fromSegmentationFile(string filename) {
 		t[x][y][z] = d;
 	}
 
-	file.close();
+	fclose(f);
 }
 
 void Density::toSegmentationFile(string filename) {
 
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
-
-	std::stringstream out_stream;
+	FILE *f = open(filename, "w");
+	if (f == NULL) return;
 
 	for (int i = range_x_start; i <= range_x_end; ++i) {
 		for (int j = range_y_start; j <= range_y_end; ++j) {
 			for (int k = range_z_start; k <= range_z_end; ++k) {
 				float val = t[i-range_x_start][j-range_y_start][k-range_z_start];
-				if (val > epsilon) out_stream << i << ' ' << j << ' ' << k << ' ' << val << '\n';
+				if (val > epsilon) fprintf(f, "%d %d %d %lf\n", i, j, k, val);
 			}
 		}
 	}
 
-	file << out_stream.str();
-	file.close();
+	fclose(f);
 }
 
 void Density::fromFile(string filename) {
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
 
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
+	FILE *f = open(filename, "r");
+	if (f == NULL) return;
 
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
-
-	in_stream >> size_x >> size_y >> size_z >> range_x_start >> range_y_start >> range_z_start >> scale;
-
+	fscanf(f, "%d %d %d %d %d %d %f", &size_x, &size_y, &size_z, &range_x_start, &range_y_start, &range_z_start, &scale);
 	range_x_end = range_x_start + size_x - 1;
 	range_y_end = range_y_start + size_y - 1;
 	range_z_end = range_z_start + size_z - 1;
@@ -306,36 +274,28 @@ void Density::fromFile(string filename) {
 
 	for (int i = 0; i < size_x; ++i) {
 		for (int j = 0; j < size_y; ++j) {
-			for (int k = 0; k < size_z; ++k) in_stream >> t[i][j][k];
+			for (int k = 0; k < size_z; ++k) fscanf(f, "%f", &t[i][j][k]);
 		}
 	}
 
-	file.close();
+	fclose(f);
 }
 
 void Density::toFile(string filename) {
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
 
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
+	FILE *f = open(filename, "w");
+	if (f == NULL) return;
 
-	std::stringstream out;
-	out << size_x << ' ' << size_y << ' ' << size_z << ' ';
-	out << range_x_start << ' ' << range_y_start << ' ' << range_z_start << ' ' << Settings::densityScale << '\n';
+	fprintf(f, "%d %d %d %d %d %d %f\n", size_x, size_y, size_z, range_x_start, range_y_start, range_z_start, Settings::densityScale);
 
 	for (int i = 0; i < size_x; ++i) {
 		for (int j = 0; j < size_y; ++j) {
-			for (int k = 0; k < size_z; ++k) out << t[i][j][k];
-			out << '\n';
+			for (int k = 0; k < size_z; ++k) fprintf(f, "%f ", t[i][j][k]);
+			fprintf(f, "\n");
 		}
-		out << '\n';
+		fprintf(f, "\n");
 	}
 
-	file << out.str();
-	file.close();
+	fclose(f);
 }
+

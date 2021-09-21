@@ -42,7 +42,7 @@ void InteractionArcs::markArcs(bool ignore_missing) {
 
 	int cnt = 0;
 	int last_start = -1;
-	std::map<int, std::vector<InteractionArc>> tmp_arcs;
+	std::map<int, std::vector<InteractionArc> > tmp_arcs;
 
 	// normally we want to print warning about mismatching arcs (ones for which anchors are missing), but
 	// if we have selected a region (either by providing specific region or by limiting region in debug mode)
@@ -149,25 +149,26 @@ void InteractionArcs::markArcs(bool ignore_missing) {
 }
 
 void InteractionArcs::removeEmptyAnchors() {
-	int i;
 	printf("removing empty anchors\n");
+	
 	for (auto el: anchors) {
+		std::vector<Anchor> correct_anchors;
+		std::set<int> correct_anchor_positions;
 
-		int removed_cnt = 0;
-		vector<bool> is_empty(anchors_cnt[el.first], true);
-
-		for (i = 0; i < arcs_cnt[el.first]; ++i) {
-			is_empty[arcs[el.first][i].start] = false;
-			is_empty[arcs[el.first][i].end] = false;
+		for (int i = 0; i < arcs_cnt[el.first]; ++i) {
+			correct_anchor_positions.insert(arcs[el.first][i].start);
+			correct_anchor_positions.insert(arcs[el.first][i].end);
 		}
 
-		for (i=is_empty.size()-1; i>=0; i--) {
-			if (is_empty[i]) {
-				anchors[el.first].erase(anchors[el.first].begin()+i);
-				removed_cnt++;
-			}
+		for (const auto& pos: correct_anchor_positions) {
+			correct_anchors.push_back(anchors[el.first][pos]);
 		}
 
+		this->anchors[el.first].clear();
+
+		for (Anchor a: correct_anchors) this->anchors[el.first].push_back(a);
+		
+		int removed_cnt = anchors_cnt[el.first] - anchors[el.first].size();
 		anchors_cnt[el.first] -= removed_cnt;	// update number of anchors
 		printf("   %s %d\n", el.first.c_str(), removed_cnt);
 	}
@@ -264,19 +265,8 @@ void InteractionArcs::loadAnchorsData(string anchors_path) {
 
 	printf("read anchors [%s]\n", anchors_path.c_str());
 
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(anchors_path);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << anchors_path << std::endl;
-		exit(1);
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
-
+	FILE *f = open(anchors_path.c_str(), "r");
+	if (f == NULL) exit(0);
 
 	int posa, posb;
 	char chr_tmp[10];
@@ -293,9 +283,7 @@ void InteractionArcs::loadAnchorsData(string anchors_path) {
 	bool motif_info = false;
 
 	char line[128];
-	in_stream.getline(line, 64);
-
-	if (!in_stream.fail()) {
+	if (fgets(line, 64, f) != NULL) {
 		int cnt = countWords(line);
 		if (cnt!=3 && cnt!=4) error("unrecognized format of anchor file");
 		if (cnt == 4) {
@@ -303,19 +291,16 @@ void InteractionArcs::loadAnchorsData(string anchors_path) {
 			printf("motif orientation info detected\n");
 		}
 	}
-
-	in_stream.seekg(0);		// move cursor back to the file beginning
+	fseek(f, 0, SEEK_SET);	// move cursor back to the file beginning
 
 	// read anchor file line by line
-	for (int i = 0; !in_stream.eof(); ++i) {
+	for (int i = 0; !feof(f); ++i) {
 
-		if (motif_info) {
-			in_stream >> chr_tmp >> posa >> posb >> orientation;
-		} else {
-			in_stream >> chr_tmp >> posa >> posb;
-		}
+		int cols = 0;	// number of values (columns) read from the file
+		if (motif_info) cols = fscanf(f, "%s %d %d %c", chr_tmp, &posa, &posb, &orientation);
+		else cols = fscanf(f, "%s %d %d", chr_tmp, &posa, &posb);
 
-		if (in_stream.fail()) continue;		// probably just an empty line at the end
+		if (cols < 3) continue;	// probably just an empty line at the end
 
 		chr = string(chr_tmp);
 
@@ -327,7 +312,7 @@ void InteractionArcs::loadAnchorsData(string anchors_path) {
 		Anchor anchor(chr, posa, posb, orientation);
 		anchors[chr].push_back(anchor);
 	}
-	file.close();
+	fclose(f);
 
 	printf("anchors loaded:\n");
 	for (auto el: anchors) {
@@ -342,18 +327,8 @@ void InteractionArcs::loadAnchorsData(string anchors_path) {
 void InteractionArcs::loadPetClustersData(string pet_clusters_path, string factor_name, BedRegions predefined_segments) {
 	printf("read clusters [%s] (factor = %s)\n", pet_clusters_path.c_str(), factor_name.c_str());
 
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(pet_clusters_path);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << pet_clusters_path << std::endl;
-		exit(1);
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(pet_clusters_path.c_str(), "r");
+	if (f == NULL) exit(0);
 
 	int ast, aend, bst, bend;
 	int posa, posb;
@@ -374,18 +349,10 @@ void InteractionArcs::loadPetClustersData(string pet_clusters_path, string facto
 	std::set<std::string> chrs_set;
 	for (std::string chr: chrs) chrs_set.insert(chr);
 
-	for (int i = 1; !in_stream.eof(); ++i) {
+	for (int i = 1; !feof(f); ++i) {
 		if (i%1000000 == 0) printf(".");
-
-		in_stream >> chr_a >> ast >> aend >> chr_b >> bst >> bend >> sc;
-
-		if (in_stream.fail()) {
-            in_stream.clear();
-            in_stream.ignore(100, '\n');
-            continue;
-        }
-
-		in_stream.ignore(1024, '\n');	// read to the end of line
+		if (fscanf(f, "%s %d %d %s %d %d %f", chr_a, &ast, &aend, chr_b, &bst, &bend, &sc) < 7) continue;
+		fgets(buf_tmp, 1024, f);	// read to the end of line
 
 		if (strcmp(chr_a, chr_b) != 0) continue; // only intra contacts
 
@@ -441,70 +408,48 @@ void InteractionArcs::loadPetClustersData(string pet_clusters_path, string facto
 		added++;
 
 	}
-	file.close();
+	fclose(f);
 
 	printf("added %d, discarded long arcs: %d, over custom split: %d\n", added, long_arcs_cnt, arcs_over_splits);
 }
 
 
 void InteractionArcs::toFile(string filename) {
-	std::stringstream out;
-	std::ofstream file;
-	file.exceptions(std::ofstream::badbit | std::ofstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ofstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return;
-	}
+	FILE *f = open(filename, "w");
+	if (f == NULL) return;
 
 	int i;
 	InteractionArc *arc;
+	fprintf(f, "%d %d\n", (int)chrs.size(), (int)factors.size());
 
-	out << (int)chrs.size() << ' ' << (int)factors.size() << '\n';
-
-	for (string factor: factors) out << factor << ' ';
-	out << '\n';
+	for (string factor: factors) fprintf(f, "%s ", factor.c_str());
+	fprintf(f, "\n");
 
 	for (string chr: chrs) {
-		out << chr << ' ' << anchors_cnt[chr] << ' ' << arcs_cnt[chr] << ' ' << (int)long_arcs[chr].size() << '\n';
-
+		fprintf(f, "%s %d %d %d\n", chr.c_str(), anchors_cnt[chr], arcs_cnt[chr], (int)long_arcs[chr].size());
 		for (i = 0; i < anchors_cnt[chr]; ++i) {
-			out << anchors[chr][i].start << ' ' << anchors[chr][i].end << ' ' << anchors[chr][i].orientation << '\n';
+			fprintf(f, "%d %d %c\n", anchors[chr][i].start, anchors[chr][i].end, anchors[chr][i].orientation);
 		}
 
 		for (int i = 0; i < arcs_cnt[chr]; ++i) {
 			arc = &arcs[chr][i];
-			out << arc->start << ' ' << arc->end << ' ' << arc->genomic_start << ' ' << arc->genomic_end << ' ';
-			out << arc->score << ' ' << arc->eff_score << ' ' << arc->factor << '\n';
+			fprintf(f, "%d %d %d %d %d %d %d\n", arc->start, arc->end, arc->genomic_start, arc->genomic_end, arc->score,
+					arc->eff_score,	arc->factor);
 		}
 
 		for (size_t i = 0; i < long_arcs[chr].size(); ++i) {
 			arc = &long_arcs[chr][i];
-			out << arc->start << ' ' << arc->end << ' ' << arc->genomic_start << ' ' << arc->genomic_end << ' ';
-			out << arc->score << ' ' << arc->eff_score << ' ' << arc->factor << '\n';
+			fprintf(f, "%d %d %d %d %d %d %d\n", arc->start, arc->end, arc->genomic_start, arc->genomic_end, arc->score,
+					arc->eff_score,	arc->factor);
 		}
 	}
-
-	file << out.str();
-	file.close();
+	fclose(f);
 }
 
 bool InteractionArcs::fromFile(string filename) {
 
-	std::ifstream file;
-	file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-
-	try {
-		file.open(filename);
-	} catch(const std::ifstream::failure &ex) {
-		std::cerr << "Error opening file: " << filename << std::endl;
-		return false;
-	}
-
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
+	FILE *f = open(filename, "r");
+	if (f == NULL) return false;
 
 	int i, j, cnt, cnt_arcs, cnt_anchors, cnt_factors, long_arcs_cnt;
 	int st, end, st_g, end_g, sc, eff_sc, fact;
@@ -512,19 +457,14 @@ bool InteractionArcs::fromFile(string filename) {
 	char orientation;
 	string chr;
 
-	in_stream >> cnt >> cnt_factors;
-
-	if (in_stream.fail()) return false;
-
+	if (fscanf(f, "%d %d", &cnt, &cnt_factors) != 2) return false;
 	for (i=0; i<cnt_factors; i++) {
-		in_stream >> chr_tmp;
+		fscanf(f, "%s", chr_tmp);
 		factors.push_back(chr_tmp);
 	}
-
 	printf("chr cnt: %d\n", cnt);
-
 	for (i = 0; i < cnt; ++i) {
-		in_stream >> chr_tmp >>  cnt_anchors >> cnt_arcs >> long_arcs_cnt;
+		fscanf(f, "%s %d %d %d", chr_tmp, &cnt_anchors, &cnt_arcs, &long_arcs_cnt);
 
 		chr = string(chr_tmp);
 		printf("[%s] %d %d %d\n", chr.c_str(), cnt_anchors, cnt_arcs, long_arcs_cnt);
@@ -534,15 +474,13 @@ bool InteractionArcs::fromFile(string filename) {
 		arcs_cnt[chr] = cnt_arcs;
 
 		for (j = 0; j < cnt_anchors; ++j) {
-			in_stream >> st >> end >> orientation;
-
+			fscanf(f, "%d %d %c", &st, &end, &orientation);
 			Anchor a(chr, st, end, orientation);
 			anchors[chr].push_back(a);
 		}
 
 		for (j = 0; j < cnt_arcs; ++j) {
-			in_stream >> st >> end >> st_g >> end_g >> sc >> eff_sc >> fact;
-
+			fscanf(f, "%d %d %d %d %d %d %d", &st, &end, &st_g, &end_g, &sc, &eff_sc, &fact);
 			InteractionArc arc(st, end, sc, fact);
 			arc.genomic_start = st_g;
 			arc.genomic_end = end_g;
@@ -553,8 +491,7 @@ bool InteractionArcs::fromFile(string filename) {
 		}
 
 		for (j = 0; j < long_arcs_cnt; ++j) {
-			in_stream >> st >> end >> st_g >> end_g >> sc >> eff_sc >> fact;
-
+			fscanf(f, "%d %d %d %d %d %d %d", &st, &end, &st_g, &end_g, &sc, &eff_sc, &fact);
 			InteractionArc arc(st, end, sc, fact);
 			arc.genomic_start = st_g;
 			arc.genomic_end = end_g;
@@ -562,7 +499,7 @@ bool InteractionArcs::fromFile(string filename) {
 			long_arcs[chr].push_back(arc);
 		}
 	}
-	file.close();
+	fclose(f);
 	return true;
 }
 

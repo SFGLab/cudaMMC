@@ -63,47 +63,28 @@ bool Cluster::contains(int genomic_pos) {
 	return genomic_pos >= start && genomic_pos <= end;
 }
 
-void Cluster::toFile(std::ofstream & file) {
-	std::stringstream out;
-	this->toStringStream(out);
-	file << out.str();
+void Cluster::toFile(FILE* file) {
+	fprintf(file, "%d %d %c %f %f %f %lu", start, end, orientation, pos.x, pos.y, pos.z, children.size());
+	for (unsigned int i = 0; i < children.size(); ++i) fprintf(file, " %d", children[i]);
+	fprintf(file, "\n");
 }
 
-void Cluster::toStringStream(std::stringstream & out) {
-	out << start << ' ' << end << ' ' << orientation << ' ' << pos.x << ' ' << pos.y << ' ' << pos.z << ' ' << children.size();
-	for (unsigned int i = 0; i < children.size(); ++i) out << children[i];
-	out << '\n';
+void Cluster::toFilePreviousFormat(FILE *file) {
+	fprintf(file, "%d %d %d %f %f %f %lu", (start+end)/2, start, end, pos.x, pos.y, pos.z, children.size());
+	for (unsigned int i = 0; i < children.size(); ++i) fprintf(file, " %d", children[i]);
+	fprintf(file, "\n");
 }
 
-void Cluster::toFilePreviousFormat(std::ofstream & file) {
-	std::stringstream out;
-	this->toStringStreamPreviousFileFormat(out);
-	file << out.str();
-}
-
-void Cluster::toStringStreamPreviousFileFormat(std::stringstream & out) {
-	out << (start + end) / 2 << ' ' << start << ' ' << end << ' ' << pos.x << ' ' << pos.y << ' ' << pos.z << ' ' << children.size();
-	for (unsigned int i = 0; i < children.size(); ++i) out << children[i];
-	out << '\n';
-}
-
-void Cluster::fromFile(std::ifstream & file) {
-	std::string full_input(std::istreambuf_iterator<char>{file}, {});
-	std::stringstream in_stream(full_input);
-
-	this->fromStringStream(in_stream);
-}
-
-void Cluster::fromStringStream(std::stringstream & in) {
+void Cluster::fromFile(FILE* file) {
 	int st, end;
 	float x, y, z;
 	int children_cnt, tmp;
 	char c;
 
-	in >> st >> end >> c >> x >> y >> z >> children_cnt;
+	fscanf(file, "%d %d %c %f %f %f %d", &st, &end, &c, &x, &y, &z, &children_cnt);
 
 	for (int i = 0; i < children_cnt; ++i) {
-		in >> tmp;
+		fscanf(file, "%d", &tmp);
 		children.push_back(tmp);
 	}
 

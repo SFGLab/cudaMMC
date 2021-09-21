@@ -13,7 +13,6 @@
 #include <queue>
 #include <stdarg.h>
 #include <fstream>
-#include <iostream>
 
 #include "InteractionArc.h"
 #include "InteractionArcs.h"

@@ -8,10 +8,6 @@
 #ifndef DENSITY_H_
 #define DENSITY_H_
 
-#include <fstream> 
-#include <sstream>
-#include <iostream>
-
 #include "../src/lib/common.h"
 
 

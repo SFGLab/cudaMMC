@@ -11,9 +11,6 @@
 #include <stdio.h>
 #include <vector>
 #include <map>
-#include <fstream> 
-#include <sstream>
-#include <iostream>
 
 #include "Cluster.h"
 #include "Chromosome.h"
@@ -28,11 +25,11 @@ public:
 	void printRegionsTree(string chr);
 
 	void toFile(string filename);
-	void toStringStream(std::stringstream & out);
+	void toFile(FILE *file);
 	void toFilePreviousFormat(string filename);
 	void fromFile(string filename);
-	void fromStringStreamPreviousFormat(std::stringstream & in);
-	void fromStringStream(std::stringstream & in);
+	void fromFilePreviousFormat(FILE* file);
+	void fromFile(FILE* file);
 	bool fromTxt(string filename);
 
 	bool fromHiCEvo(string filename);	// create chr based on hic-evo hierarchical chromosome
