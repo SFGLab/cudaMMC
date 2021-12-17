@@ -8,27 +8,26 @@
 #ifndef CHROMOSOMESSET_H_
 #define CHROMOSOMESSET_H_
 
+#include "Chromosome.h"
 #include <string.h>
 #include <vector>
-#include "Chromosome.h"
 
 class ChromosomesSet {
 public:
-	ChromosomesSet();
+  ChromosomesSet();
 
-	void print();
+  void print();
 
-	void add(std::map<std::string, Chromosome> chr);
-	void add(std::map<std::string, Chromosome> chr, string desc);
+  void add(std::map<std::string, Chromosome> chr);
+  void add(std::map<std::string, Chromosome> chr, string desc);
 
-	void toFile(string filename);
-	void toFile(FILE *file);
-	void fromFile(string filename);
-	void fromFile(FILE* file);
+  void toFile(string filename);
+  void toFile(FILE *file);
+  void fromFile(string filename);
+  void fromFile(FILE *file);
 
-	std::vector<std::map<std::string, Chromosome> > chromosome;
-	std::vector<string> desc;
-
+  std::vector<std::map<std::string, Chromosome>> chromosome;
+  std::vector<string> desc;
 };
 
 #endif /* CHROMOSOMESSET_H_ */

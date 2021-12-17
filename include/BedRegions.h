@@ -18,15 +18,14 @@ using namespace std;
 
 class BedRegions {
 public:
-	BedRegions();
+  BedRegions();
 
-	void fromFile(std::string path);
+  void fromFile(std::string path);
 
-	void print();
-	void addNewIntervals(std::string chr, int start, int end, int step);
+  void print();
+  void addNewIntervals(std::string chr, int start, int end, int step);
 
-	std::vector<BedRegion> regions;
-
+  std::vector<BedRegion> regions;
 };
 
 #endif /* BEDREGIONS_H_ */

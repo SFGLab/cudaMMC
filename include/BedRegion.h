@@ -13,19 +13,19 @@
 
 class BedRegion {
 public:
-	BedRegion(std::string _chr, int _start, int _end);
-	BedRegion();
+  BedRegion(std::string _chr, int _start, int _end);
+  BedRegion();
 
-	static bool tryParse(std::string str);
-	bool parse(std::string str);
+  static bool tryParse(std::string str);
+  bool parse(std::string str);
 
-	void print();
+  void print();
 
-	bool contains(int pos);
+  bool contains(int pos);
 
-	std::string chr;
-	int start;
-	int end;
+  std::string chr;
+  int start;
+  int end;
 };
 
 #endif /* BEDREGION_H_ */
