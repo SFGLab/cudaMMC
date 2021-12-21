@@ -1198,7 +1198,7 @@ HierarchicalChromosome::gpuHelper(const int pos_start, const int pos_stop,
   cudaMemcpy(current_levels, current_levels_h.data(),
              current_levels_h.size() * sizeof(int), cudaMemcpyHostToDevice);
 
-  gpuAssert(cudaDeviceSynchronize());
+  gpuErrchk(cudaDeviceSynchronize());
 
   parallelFind3DSmoothPosition<<<1024, 100>>>(
       pos_start, pos_stop, resolution_bp, size, p1, p2, p1_end, p2_start,
@@ -1207,9 +1207,9 @@ HierarchicalChromosome::gpuHelper(const int pos_start, const int pos_stop,
 
   );
 
-  gpuAssert(cudaPeekAtLastError());
+  gpuErrchk(cudaPeekAtLastError());
 
-  gpuAssert(cudaDeviceSynchronize());
+  gpuErrchk(cudaDeviceSynchronize());
 
   // copy results back
   ret = std::vector<float3>(out_size);
