@@ -12,7 +12,9 @@
 
 #include <time.h>
 
-#include "../include/LooperSolver.h"
+#include <LooperSolver.h>
+
+#include <cuda_fp16.h>
 
 #define gpuErrchk(ans)                                                         \
   { gpuAssert((ans), __FILE__, __LINE__); }
@@ -353,7 +355,7 @@ float LooperSolver::ParallelMonteCarloHeatmap(float step_size) {
   thrust::host_vector<bool> h_clusters_fixed(active_region.size());
   thrust::host_vector<half3> h_clusters_positions_half(active_region.size());
 
-  for (int i = 0; i < active_region.size(); ++i) {
+  for (size_t i = 0; i < active_region.size(); ++i) {
     h_clusters_fixed[i] = clusters[i].is_fixed;
   }
 
@@ -368,7 +370,7 @@ float LooperSolver::ParallelMonteCarloHeatmap(float step_size) {
                  d_heatmap_dist.begin() + heatmapSize * i);
   }
 
-  for (int i = 0; i < active_region.size(); ++i) {
+  for (size_t i = 0; i < active_region.size(); ++i) {
     h_clusters_positions_half[i].x =
         __float2half(clusters[active_region[i]].pos.x);
     h_clusters_positions_half[i].y =
@@ -406,7 +408,7 @@ float LooperSolver::ParallelMonteCarloHeatmap(float step_size) {
 
   h_clusters_positions_half = d_clusters_positions;
 
-  for (int i = 0; i < active_region.size(); ++i) {
+  for (size_t i = 0; i < active_region.size(); ++i) {
     clusters[active_region[i]].pos.x =
         __half2float(h_clusters_positions_half[i].x);
     clusters[active_region[i]].pos.y =

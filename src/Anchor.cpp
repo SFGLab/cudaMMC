@@ -5,7 +5,7 @@
  *      Author: psz
  */
 
-#include "../include/Anchor.h"
+#include <Anchor.h>
 
 Anchor::Anchor() {
   start = 0;

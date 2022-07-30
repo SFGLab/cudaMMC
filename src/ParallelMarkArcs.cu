@@ -9,7 +9,7 @@
 
 #include <time.h>
 
-#include "../include/InteractionArcs.h"
+#include <InteractionArcs.h>
 
 #define gpuErrchk(ans)                                                         \
   { gpuAssert((ans), __FILE__, __LINE__); }

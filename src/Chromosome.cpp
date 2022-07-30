@@ -1,11 +1,4 @@
-/*
- * Chromosome.cpp
- *
- *  Created on: Aug 3, 2013
- *      Author: psz
- */
-
-#include "../include/Chromosome.h"
+#include <Chromosome.h>
 
 Chromosome::Chromosome() {
   size = 0;

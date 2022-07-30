@@ -8,7 +8,7 @@
 #ifndef CHROMOSOMESSET_H_
 #define CHROMOSOMESSET_H_
 
-#include "Chromosome.h"
+#include <Chromosome.h>
 #include <string.h>
 #include <vector>
 

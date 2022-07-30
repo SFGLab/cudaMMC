@@ -10,10 +10,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "include/BedRegion.h"
-#include "include/HierarchicalChromosome.h"
-#include "include/LooperSolver.h"
-#include "src/lib/common.h"
+#include <BedRegion.h>
+#include <HierarchicalChromosome.h>
+#include <LooperSolver.h>
+#include <common.h>
 
 std::map<char, std::string> args;
 

@@ -1,11 +1,4 @@
-/*
- * Cluster.cpp
- *
- *  Created on: Jun 1, 2014
- *      Author: psz
- */
-
-#include "../include/Cluster.h"
+#include <Cluster.h>
 
 Cluster::Cluster() { init(); }
 

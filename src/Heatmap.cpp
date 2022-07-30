@@ -1,11 +1,4 @@
-/*
- * Heatmap.cpp
- *
- *  Created on: Aug 7, 2013
- *      Author: psz
- */
-
-#include "../include/Heatmap.h"
+#include <Heatmap.h>
 
 Heatmap::Heatmap() {
   this->size = 0;

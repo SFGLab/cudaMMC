@@ -1,11 +1,4 @@
-/*
- * BedRegions.cpp
- *
- *  Created on: Jun 19, 2014
- *      Author: psz
- */
-
-#include "../include/BedRegions.h"
+#include <BedRegions.h>
 
 BedRegions::BedRegions() {}
 

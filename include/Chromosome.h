@@ -13,10 +13,10 @@
 
 #include <locale>
 
-#include "../src/lib/common.h"
-#include "../src/lib/rmsd.h"
-#include "Heatmap.h"
-#include "Settings.h"
+#include <common.h>
+#include <rmsd.h>
+#include <Heatmap.h>
+#include <Settings.h>
 
 using namespace std;
 

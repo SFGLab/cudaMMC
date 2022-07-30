@@ -1,11 +1,4 @@
-/*
- * InteractionArc.cpp
- *
- *  Created on: Apr 20, 2014
- *      Author: psz
- */
-
-#include "../include/InteractionArc.h"
+#include <InteractionArc.h>
 
 InteractionArc::InteractionArc() { init(); }
 

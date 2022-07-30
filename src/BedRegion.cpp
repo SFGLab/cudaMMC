@@ -1,11 +1,4 @@
-/*
- * BedRegion.cpp
- *
- *  Created on: Jun 19, 2014
- *      Author: psz
- */
-
-#include "../include/BedRegion.h"
+#include <BedRegion.h>
 
 BedRegion::BedRegion() {
   chr = "chr0";

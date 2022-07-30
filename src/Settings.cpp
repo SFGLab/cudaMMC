@@ -1,11 +1,4 @@
-/*
- * Settings.cpp
- *
- *  Created on: Aug 4, 2013
- *      Author: psz
- */
-
-#include "../include/Settings.h"
+#include <Settings.h>
 
 bool Settings::initialized;
 bool Settings::use2D;

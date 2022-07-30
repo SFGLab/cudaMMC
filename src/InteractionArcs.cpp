@@ -1,11 +1,4 @@
-/*
- * InteractionArcs.cpp
- *
- *  Created on: Apr 18, 2014
- *      Author: psz
- */
-
-#include "../include/InteractionArcs.h"
+#include <InteractionArcs.h>
 
 InteractionArcs::InteractionArcs() {
   selected_region.chr = "";

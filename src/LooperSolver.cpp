@@ -1,11 +1,4 @@
-/*
- * LooperSolverMixed.cpp
- *
- *  Created on: Jun 1, 2014
- *      Author: psz
- */
-
-#include "../include/LooperSolver.h"
+#include <LooperSolver.h>
 
 LooperSolver::LooperSolver(string label, string outdir) {
 

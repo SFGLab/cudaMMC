@@ -20,12 +20,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "../src/lib/common.h"
-#include "Anchor.h"
-#include "BedRegion.h"
-#include "BedRegions.h"
-#include "InteractionArc.h"
-#include "Settings.h"
+#include <common.h>
+#include <Anchor.h>
+#include <BedRegion.h>
+#include <BedRegions.h>
+#include <InteractionArc.h>
+#include <Settings.h>
 
 class InteractionArcs {
 public:

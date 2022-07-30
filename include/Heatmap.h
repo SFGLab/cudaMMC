@@ -16,8 +16,8 @@
 
 #include <locale>
 
-#include "../src/lib/common.h"
-#include "Settings.h"
+#include <common.h>
+#include <Settings.h>
 
 using namespace std;
 

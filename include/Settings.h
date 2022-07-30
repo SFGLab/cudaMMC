@@ -8,8 +8,8 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
-#include "../src/lib/INIReader.h"
-#include "../src/lib/common.h"
+#include <INIReader.h>
+#include <common.h>
 #include <stdio.h>
 #include <string>
 

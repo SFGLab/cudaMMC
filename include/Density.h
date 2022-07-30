@@ -8,7 +8,7 @@
 #ifndef DENSITY_H_
 #define DENSITY_H_
 
-#include "../src/lib/common.h"
+#include <common.h>
 
 class Density {
 public:

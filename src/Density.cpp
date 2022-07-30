@@ -1,15 +1,10 @@
-/*
- * Density.cpp
- *
- *  Created on: Jan 15, 2015
- *      Author: psz
- */
-
-#include "../include/Density.h"
-#include "../include/Settings.h"
-#include "lib/common.h"
-#include "lib/mtxlib.h"
 #include <queue>
+
+#include <Density.h>
+#include <Settings.h>
+#include <common.h>
+#include <mtxlib.h>
+
 
 Density::Density() { size_x = size_y = size_z = 0; }
 

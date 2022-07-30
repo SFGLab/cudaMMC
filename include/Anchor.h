@@ -8,7 +8,7 @@
 #ifndef ANCHOR_H_
 #define ANCHOR_H_
 
-#include "InteractionArc.h"
+#include <InteractionArc.h>
 #include <string>
 
 class Anchor {

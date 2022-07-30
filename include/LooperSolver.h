@@ -14,15 +14,15 @@
 #include <string>
 #include <vector>
 
-#include "BedRegion.h"
-#include "BedRegions.h"
-#include "ChromosomesSet.h"
-#include "Cluster.h"
-#include "Density.h"
-#include "Heatmap.h"
-#include "HierarchicalChromosome.h"
-#include "InteractionArc.h"
-#include "InteractionArcs.h"
+#include <BedRegion.h>
+#include <BedRegions.h>
+#include <ChromosomesSet.h>
+#include <Cluster.h>
+#include <Density.h>
+#include <Heatmap.h>
+#include <HierarchicalChromosome.h>
+#include <InteractionArc.h>
+#include <InteractionArcs.h>
 
 class LooperSolver {
 public:

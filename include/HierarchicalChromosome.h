@@ -1,10 +1,3 @@
-/*
- * HierarchicalChromosome.h
- *
- *  Created on: Jun 2, 2014
- *      Author: psz
- */
-
 #ifndef HIERARCHICALCHROMOSOME_H_
 #define HIERARCHICALCHROMOSOME_H_
 
@@ -12,9 +5,9 @@
 #include <stdio.h>
 #include <vector>
 
-#include "Chromosome.h"
-#include "Cluster.h"
-#include "InteractionArcs.h"
+#include <Chromosome.h>
+#include <Cluster.h>
+#include <InteractionArcs.h>
 #include <optional>
 #ifdef __CUDACC__
 #include <vector_types.h>

@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include <vector>
 
-#include "../src/lib/common.h"
-#include "InteractionArc.h"
+#include <common.h>
+#include <InteractionArc.h>
 
 class Cluster {
 public:

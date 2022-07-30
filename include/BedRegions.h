@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "BedRegion.h"
+#include <BedRegion.h>
 
 using namespace std;
 

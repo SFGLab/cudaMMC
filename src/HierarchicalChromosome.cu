@@ -1,11 +1,4 @@
-/*
- * HierarchicalChromosomeMixed.cpp
- *
- *  Created on: Jun 2, 2014
- *      Author: psz
- */
-
-#include "../include/HierarchicalChromosome.h"
+#include <HierarchicalChromosome.h>
 #include <iostream>
 #include <optional>
 
