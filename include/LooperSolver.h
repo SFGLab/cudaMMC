@@ -1,10 +1,3 @@
-/*
- * LooperSolver.h
- *
- *  Created on: Jun 1, 2014
- *      Author: psz
- */
-
 #ifndef LOOPERSOLVER_H_
 #define LOOPERSOLVER_H_
 

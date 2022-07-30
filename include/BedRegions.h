@@ -1,10 +1,3 @@
-/*
- * BedRegions.h
- *
- *  Created on: Jun 19, 2014
- *      Author: psz
- */
-
 #ifndef BEDREGIONS_H_
 #define BEDREGIONS_H_
 

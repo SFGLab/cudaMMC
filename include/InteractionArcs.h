@@ -1,10 +1,3 @@
-/*
- * InteractionArcs.h
- *
- *  Created on: Apr 18, 2014
- *      Author: psz
- */
-
 #ifndef INTERACTIONARCS_H_
 #define INTERACTIONARCS_H_
 

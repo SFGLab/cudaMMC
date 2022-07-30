@@ -1,10 +1,3 @@
-/*
- * Settings.h
- *
- *  Created on: Aug 4, 2013
- *      Author: psz
- */
-
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 

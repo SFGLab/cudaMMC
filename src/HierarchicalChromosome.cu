@@ -882,8 +882,6 @@ void HierarchicalChromosome::getSpatialDistributionStats() {
   // calculate, at different scales (chromosomal, subchromosomal and cluster):
   // * diameter of chromosomes
   // * distances between chromosomes
-
-  int i, j;
   float d;
   float min, max, avg;
   for (int lvl = 0; lvl <= 0; lvl++) {
@@ -1109,7 +1107,7 @@ vector3 HierarchicalChromosome::find3DSmoothPosition(string chr_ind, int pos) {
       vector3 p2 = clusters[p].pos;
       vector3 p0 = i > 1 ? clusters[current_level[chr_ind][i - 2]].pos
                          : mirrorPoint(p1, p2);
-      vector3 p3 = i + 1 < current_level[chr_ind].size()
+      vector3 p3 = static_cast<std::size_t>(i + 1) < current_level[chr_ind].size()
                        ? clusters[current_level[chr_ind][i + 1]].pos
                        : mirrorPoint(p2, p1);
 
@@ -1132,7 +1130,7 @@ vector3 HierarchicalChromosome::find3DSmoothPosition(string chr_ind, int pos) {
                     // suppression
 }
 
-__global__ void parallelFind3DSmoothPosition(
+__FORCE_INLINE__ __global__ void parallelFind3DSmoothPosition(
     const int pos_start, const int pos_stop, const int resolution_bp,
     const size_t size, const int _p1, const int _p2, const int p1_end,
     const int p2_start, const int *current_levels,
@@ -1177,7 +1175,7 @@ HierarchicalChromosome::gpuHelper(const int pos_start, const int pos_stop,
   std::vector<float3> clusters_positions_h(clusters.size());
   std::vector<int> clusters_genomic_positions_h(clusters.size());
 
-  for (auto i = 0; i < clusters.size(); ++i) {
+  for (std::size_t i = 0; i < clusters.size(); ++i) {
     clusters_genomic_positions_h[i] = clusters[i].genomic_pos;
     clusters_positions_h[i].x = clusters[i].pos[0];
     clusters_positions_h[i].y = clusters[i].pos[1];

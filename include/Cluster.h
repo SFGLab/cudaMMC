@@ -1,10 +1,3 @@
-/*
- * Cluster.h
- *
- *  Created on: Jun 1, 2014
- *      Author: psz
- */
-
 #ifndef CLUSTER_H_
 #define CLUSTER_H_
 

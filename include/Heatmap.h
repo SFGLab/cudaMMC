@@ -1,10 +1,3 @@
-/*
- * Heatmap.h
- *
- *  Created on: Aug 7, 2013
- *      Author: psz
- */
-
 #ifndef HEATMAP_H_
 #define HEATMAP_H_
 

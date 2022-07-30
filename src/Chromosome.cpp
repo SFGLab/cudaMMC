@@ -482,7 +482,7 @@ void Chromosome::toFile(string filename) {
 
 void Chromosome::toFile(FILE *file) {
   for (int i = 0; i < size; i++) {
-    if (genomic_position.size() > i)
+    if (genomic_position.size() > static_cast<std::size_t>(i))
       fprintf(file, "%f %f %f %d\n", points[i].x, points[i].y, points[i].z,
               genomic_position[i]);
     else

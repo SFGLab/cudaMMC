@@ -1,10 +1,3 @@
-/*
- * Density.h
- *
- *  Created on: Jan 15, 2015
- *      Author: psz
- */
-
 #ifndef DENSITY_H_
 #define DENSITY_H_
 

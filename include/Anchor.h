@@ -1,10 +1,3 @@
-/*
- * Anchor.h
- *
- *  Created on: Apr 27, 2014
- *      Author: psz
- */
-
 #ifndef ANCHOR_H_
 #define ANCHOR_H_
 

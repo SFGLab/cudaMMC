@@ -977,14 +977,14 @@ std::vector<int> LooperSolver::findSplit(std::vector<int> gaps, int exp_size,
 
   for (size_t i = 1; i < gaps.size(); ++i) {
     // printf("%d\n", i);
-    int prev_cluster = i == 1 ? 0 : gaps[i - 1] + 1;
+    // std::size_t prev_cluster = i == 1 ? 0 : gaps[i - 1] + 1;
 
-    int next_cluster =
-        i == gaps.size() - 1 ? gaps[gaps.size() - 1] : gaps[i] + 1;
-    int center =
-        i + 1 < gaps.size()
-            ? (clusters[gaps[i]].end + clusters[next_cluster].start) / 2
-            : 0;
+    //std::size_t next_cluster =
+        //i == gaps.size() - 1 ? gaps[gaps.size() - 1] : gaps[i] + 1;
+    //std::size_t center =
+        //i + 1 < gaps.size()
+         //   ? (clusters[gaps[i]].end + clusters[next_cluster].start) / 2
+         //   : 0;
     // printf("%d %d\n", clusters[gaps[i]].end, clusters[next_cluster].start);
     // printf("(%d - %d), gap span=%d, span center=%d\n",
     // clusters[prev_cluster].start, clusters[gaps[i]].end, S[i-1], center);

@@ -1,10 +1,3 @@
-/*
- * Chromosome.h
- *
- *  Created on: Aug 3, 2013
- *      Author: psz
- */
-
 #ifndef CHROMOSOME_H_
 #define CHROMOSOME_H_
 

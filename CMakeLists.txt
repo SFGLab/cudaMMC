@@ -1,8 +1,6 @@
     cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
     project(3dgnome LANGUAGES C CXX CUDA)
 
-    set(CMAKE_CUDA_FLAGS -arch=sm_75)
-     
   set(SOURCES
     src/main.cpp
     src/Anchor.cpp      
@@ -52,6 +50,7 @@
     target_compile_options(cuMMC PUBLIC -Wall)
     target_compile_features(cuMMC PUBLIC cxx_std_17)
     set_target_properties(cuMMC PROPERTIES CXX_STANDARD 17)
+    set_target_properties(cuMMC PROPERTIES CUDA_ARCHITECTURES 75)
 
     target_include_directories(cuMMC PUBLIC 
       ${CMAKE_SOURCE_DIR}/thirdparty/

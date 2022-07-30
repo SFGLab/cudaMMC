@@ -667,7 +667,7 @@ void prepareLooper() {
   // -x allows to override the values in the settings file
   if (flag_set('x')) {
     vector<string> arr = split(get_arg('x'), ',');
-    for (int i = 0; i < arr.size(); ++i) {
+    for (std::size_t i = 0; i < arr.size(); ++i) {
       vector<string> arr_par = split(arr[i], ':');
 
       if (arr_par[0] == "ib_random_walk_jumps")

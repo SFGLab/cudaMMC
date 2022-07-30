@@ -1,10 +1,3 @@
-/*
- * ChromosomesSet.h
- *
- *  Created on: May 25, 2014
- *      Author: psz
- */
-
 #ifndef CHROMOSOMESSET_H_
 #define CHROMOSOMESSET_H_
 

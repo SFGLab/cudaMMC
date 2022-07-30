@@ -1,10 +1,3 @@
-/*
- * Anchor.cpp
- *
- *  Created on: Apr 27, 2014
- *      Author: psz
- */
-
 #include <Anchor.h>
 
 Anchor::Anchor() {

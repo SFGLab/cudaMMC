@@ -410,7 +410,7 @@ void InteractionArcs::loadPetClustersData(string pet_clusters_path,
     // if custom split is used, then ignore interactions spanning over the split
     // sites
     bool ok = true;
-    for (int j = 0; j < predefined_segments.regions.size(); ++j) {
+    for (std::size_t j = 0; j < predefined_segments.regions.size(); ++j) {
       if (strcmp(predefined_segments.regions[j].chr.c_str(), chr_a) == 0) {
         if ((posa <= predefined_segments.regions[j].start &&
              posb >= predefined_segments.regions[j].start) ||
