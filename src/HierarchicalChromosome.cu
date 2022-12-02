@@ -375,6 +375,90 @@ void HierarchicalChromosome::smoothSpline(int n) {
   smooth_factor = n;
 }
 
+__forceinline__ float3 __device__ mirrorPointDevice(const float3 &a,
+                                                    float3 &b) {
+  return make_float3(a.x * 2.0f - b.x, a.y * 2.0f - b.y, a.z * 2.0f - b.z);
+}
+
+__forceinline__ __device__ float3 operator+(const float3 &a, const float3 &b) {
+
+  return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+__forceinline__ __device__ float3 operator-(const float3 &a, const float3 &b) {
+
+  return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+__forceinline__ __device__ float3 operator*(const float &a, const float3 &b) {
+
+  return make_float3(a * b.x, a * b.y, a * b.z);
+}
+
+__forceinline__ __device__ float3 operator*(const float3 &a, const float &b) {
+
+  return b * a;
+}
+
+__forceinline__ __device__ float3 interpolateSplineDevice(const float t,
+                                                          const float3 &p1,
+                                                          const float3 &p2,
+                                                          const float3 &p3,
+                                                          const float3 &p4) {
+  const float t2 = t * t;
+  const float t3 = t2 * t;
+  const float b1 = .5f * (-t3 + 2.0f * t2 - t);
+  const float b2 = .5f * (3.0f * t3 - 5.0f * t2 + 2.0f);
+  const float b3 = .5f * (-3.0f * t3 + 4.0f * t2 + t);
+  const float b4 = .5f * (t3 - t2);
+  return (p1 * b1 + p2 * b2 + p3 * b3 + p4 * b4);
+}
+__global__ void parallelFind3DSmoothPosition(
+    const int pos_start, const int pos_stop, const int resolution_bp,
+    const size_t size, const int _p1, const int _p2, const int p1_end,
+    const int p2_start, const int *current_levels,
+    const size_t current_levels_size, const int *clusters_genomic_positions,
+    const float3 *clusters_positions, float3 *out) {
+
+  auto idx = threadIdx.x + blockIdx.x * blockDim.x;
+  const auto gridSize = gridDim.x * blockDim.x;
+
+  for (long long pos = pos_start + resolution_bp * idx; pos <= pos_stop;
+       pos += gridSize * resolution_bp) {
+
+    if (pos < p1_end) {
+      out[idx] = clusters_positions[_p1];
+      return;
+    }
+    if (pos >= p2_start) {
+      out[idx] = clusters_positions[_p2];
+      return;
+    }
+
+    int prev_p = -1;
+    for (size_t i = 0; i < current_levels_size; ++i) {
+      int p = current_levels[i]; // index of i-th cluster
+      if (pos < clusters_genomic_positions[p]) {
+        float3 p1 = clusters_positions[prev_p];
+        float3 p2 = clusters_positions[p];
+        float3 p0 = i > 1 ? clusters_positions[current_levels[i - 2]]
+                          : mirrorPointDevice(p1, p2);
+        float3 p3 = i + 1 < current_levels_size
+                        ? clusters_positions[current_levels[i + 1]]
+                        : mirrorPointDevice(p2, p1);
+        const float t = (pos - clusters_genomic_positions[prev_p]) /
+                        (float)(clusters_genomic_positions[p] -
+                                clusters_genomic_positions[prev_p]);
+        out[idx] = interpolateSplineDevice(t, p0, p1, p2, p3);
+        return;
+      }
+      prev_p = p;
+    }
+
+    idx += gridSize;
+  }
+}
+
 Chromosome HierarchicalChromosome::createEqidistantModel(int resolution_bp,
                                                          string chr_ind) {
   createCurrentLevelStructure();
@@ -1122,12 +1206,6 @@ vector3 HierarchicalChromosome::find3DSmoothPosition(string chr_ind, int pos) {
                     // suppression
 }
 
-__FORCE_INLINE__ __global__ void parallelFind3DSmoothPosition(
-    const int pos_start, const int pos_stop, const int resolution_bp,
-    const size_t size, const int _p1, const int _p2, const int p1_end,
-    const int p2_start, const int *current_levels,
-    const size_t current_levels_size, const int *clusters_genomic_positions,
-    const float3 *clusters_positions, float3 *out);
 
 std::optional<std::vector<float3>>
 HierarchicalChromosome::gpuHelper(const int pos_start, const int pos_stop,
@@ -1199,87 +1277,4 @@ HierarchicalChromosome::gpuHelper(const int pos_start, const int pos_stop,
   return ret;
 }
 
-__forceinline__ float3 __device__ mirrorPointDevice(const float3 &a,
-                                                    float3 &b) {
-  return make_float3(a.x * 2.0f - b.x, a.y * 2.0f - b.y, a.z * 2.0f - b.z);
-}
 
-__forceinline__ __device__ float3 operator+(const float3 &a, const float3 &b) {
-
-  return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
-}
-
-__forceinline__ __device__ float3 operator-(const float3 &a, const float3 &b) {
-
-  return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
-}
-
-__forceinline__ __device__ float3 operator*(const float &a, const float3 &b) {
-
-  return make_float3(a * b.x, a * b.y, a * b.z);
-}
-
-__forceinline__ __device__ float3 operator*(const float3 &a, const float &b) {
-
-  return b * a;
-}
-
-__forceinline__ __device__ float3 interpolateSplineDevice(const float t,
-                                                          const float3 &p1,
-                                                          const float3 &p2,
-                                                          const float3 &p3,
-                                                          const float3 &p4) {
-  const float t2 = t * t;
-  const float t3 = t2 * t;
-  const float b1 = .5f * (-t3 + 2.0f * t2 - t);
-  const float b2 = .5f * (3.0f * t3 - 5.0f * t2 + 2.0f);
-  const float b3 = .5f * (-3.0f * t3 + 4.0f * t2 + t);
-  const float b4 = .5f * (t3 - t2);
-  return (p1 * b1 + p2 * b2 + p3 * b3 + p4 * b4);
-}
-
-__global__ void parallelFind3DSmoothPosition(
-    const int pos_start, const int pos_stop, const int resolution_bp,
-    const size_t size, const int _p1, const int _p2, const int p1_end,
-    const int p2_start, const int *current_levels,
-    const size_t current_levels_size, const int *clusters_genomic_positions,
-    const float3 *clusters_positions, float3 *out) {
-
-  auto idx = threadIdx.x + blockIdx.x * blockDim.x;
-  const auto gridSize = gridDim.x * blockDim.x;
-
-  for (long long pos = pos_start + resolution_bp * idx; pos <= pos_stop;
-       pos += gridSize * resolution_bp) {
-
-    if (pos < p1_end) {
-      out[idx] = clusters_positions[_p1];
-      return;
-    }
-    if (pos >= p2_start) {
-      out[idx] = clusters_positions[_p2];
-      return;
-    }
-
-    int prev_p = -1;
-    for (size_t i = 0; i < current_levels_size; ++i) {
-      int p = current_levels[i]; // index of i-th cluster
-      if (pos < clusters_genomic_positions[p]) {
-        float3 p1 = clusters_positions[prev_p];
-        float3 p2 = clusters_positions[p];
-        float3 p0 = i > 1 ? clusters_positions[current_levels[i - 2]]
-                          : mirrorPointDevice(p1, p2);
-        float3 p3 = i + 1 < current_levels_size
-                        ? clusters_positions[current_levels[i + 1]]
-                        : mirrorPointDevice(p2, p1);
-        const float t = (pos - clusters_genomic_positions[prev_p]) /
-                        (float)(clusters_genomic_positions[p] -
-                                clusters_genomic_positions[prev_p]);
-        out[idx] = interpolateSplineDevice(t, p0, p1, p2, p3);
-        return;
-      }
-      prev_p = p;
-    }
-
-    idx += gridSize;
-  }
-}
