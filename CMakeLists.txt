@@ -50,7 +50,14 @@
     target_compile_options(cuMMC PUBLIC -Wall)
     target_compile_features(cuMMC PUBLIC cxx_std_17)
     set_target_properties(cuMMC PROPERTIES CXX_STANDARD 17)
-    set_target_properties(cuMMC PROPERTIES CUDA_ARCHITECTURES 75)
+    set_target_properties(cuMMC PROPERTIES CMAKE_CUDA_STANDARD 11)
+    set_target_properties(cuMMC PROPERTIES CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set_target_properties(cuMMC PROPERTIES CUDA_ARCHITECTURES 60 70 75 80 86)
+
+    set_target_properties(cuMMC
+                      PROPERTIES
+                        CUDA_RUNTIME_LIBRARY static
+                      )
 
     target_include_directories(cuMMC PUBLIC 
       ${CMAKE_SOURCE_DIR}/thirdparty/
