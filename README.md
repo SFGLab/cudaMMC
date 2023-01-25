@@ -1,11 +1,67 @@
-# README #
+# cudaMMC - Multiscale Monte Carlo approach to 3D structure modelling of a human genome
+
+## System and hardware requirements
+* UNIX based Operating System
+* C++ 17 compliant compiler (gcc/clang)
+* NVIDIA CUDA Toolkit 11.0 or higher with compatible NVIDIA driver
+* NVIDIA GPU with Pascal architecture or newer (compute capability >= 6.0)
+* CMake 3.13 or higher
+
+## Compilation
+First, generate the makefile with CMake by executing the command below from the root directory of the package with your desired `path_to_build_folder` and `cuda_arch` (>= 60) values:
+```
+cmake -B ./<path_to_build_folder> -S ./ -DCUDA_ARCH="<cuda_arch>"
+```
+Example for GPU with compute capability >= 8.0:
+```
+cmake -B ./build -S ./ -DCUDA_ARCH="80"
+```
+If you wish to compile a multi-architecture binary, separate desired architectures with a semicolon eg. `-DCUDA_ARCH="60;70;80"`
+
+Then, compile the program by executing the following command:
+```
+make --directory ./build
+```
+
+Finally, you can verify if the program has compiled properly by executing the cudaMMC binary:
+```
+./build/cudaMMC
+```
+You should see the usage message printed in the terminal.
+
+## User manual
+We have added three additional parameters under [cuda] section that can be
+specified in the config.ini configuration file. These are:
+* num threads
+* blocks multiplier
+* milestone fails.
+The num threads parameter specifies the number of CUDA threads to be launched
+per block, while blocks multiplier stands for the number of CUDA blocks
+multiplied by the number of beads in the system, as it was described in the main
+paper. Lastly, the milestone fails parameter determines after how many non
+improved milestone scores, the algorithm will stop.
 
 Example execution command:
 ```
-./cuMMC -s config.ini -c chr14 -o ~/chiapet/chr14/ -n chr14_test
+./build/cudaMMC -s config.ini -c chr14 -o ~/chiapet/chr14/ -n chr14_test
 ```
 
-# Input and output files #
+Program usage:
+```
+cudaMMC -s <path> -n <label>
+    -a    action to perform (available values: 'create')
+    -s    path to settings file
+    -n    label to be used in names of output files
+    -c    chromosomes (or region) to be included in the simulation (eg 'chr14:1:2500000', default: 'chr1-chr22,chrX')
+    -o    output directory (with trailing '/'; must exists; default: './')
+Debugging options
+    -u    maximal number of chromosomes to reconstruct
+    -l    length of chromosome fragment that will be reconstructed (in bp)
+Notes
+    PET clusters should have filenames of the form 'GM12878_CTCF_Rep1.withLinker.clusters.intra.PET<N>+.merged_anchors.simple.txt', where <M> corresponds to the flag -m
+```
+
+### Input and output files
 Input of the algorithm consists of several files. First of all, there are files corresponding to different types of ChIA-PET data: anchors, PET clusters and singletons. As singleton files tend to be large it is possible to provide inter- and intrachromosomal singletons files separately (using **singletons_inter** and **singletons** options, respectively). This allows the program to skip the interchromosomal files reading if they are not needed (e.g. when a single chromosome is reconstructed). When the subanchor heatmaps are to be generated it is beneficial to create the intrachromosomal singletons files for every chromosome separately (one should denote this by setting the flag **split_singleton_files_by_chr**), and to use these per-chromosome files rather than the bigger, aggregated files. These files can be easily created using a following commands:
 ```
 #!bash
@@ -33,7 +89,7 @@ Paths of the files are provided via the setting file in the **[data]** section. 
 
 Following is the format description of the corresponding input files.
 
-## Anchor file ##
+### Anchor file
 This file contain info about the anchors. For every anchor the chromosome and genomic position of start and end is provided. Optionally the CTCF motif orientation may be provided as 'L' (leftward) or 'R' (rightward). 'N' may be used if the orientation is unknown. File format is as follows:
 
 ```
@@ -51,7 +107,7 @@ chr1	967152	969271	R
 chr1	997732	1000167	L
 ```
 
-## Cluster files ##
+### Cluster files
 These files contain info about the PET clusters. Each file corresponds to a single transcription factor used in the experiment. Every line of a file describes a single PET cluster and consists of the chromosome, start and end position for the anchors overlapping with the PET cluster. Additionally, a PET count is provided. File format is as follows:
 
 ```
@@ -70,7 +126,7 @@ chr1	967152	969271	chr1	1306262	1308124	7
 
 ```
 
-## Singleton files ##
+### Singleton files
 Singleton files possess the same format as the clusters files, but the genomic coordinates correspond to the paired-end read mapping locations rather than the overlapping anchors:
 ```
 #!text
