@@ -1,4 +1,4 @@
-# cudaMMC - Multiscale Monte Carlo approach to 3D structure modelling of a human genome
+# cudaMMC - Parallel Multiscale Monte Carlo approach to 3D structure modelling of a human genome
 
 ## System and hardware requirements
 * UNIX based Operating System
