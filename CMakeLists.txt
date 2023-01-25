@@ -46,35 +46,35 @@
     thirdparty/rmsd.h
   )
 
-    add_executable(cuMMC)
-    target_compile_options(cuMMC PUBLIC -Wall)
-    target_compile_features(cuMMC PUBLIC cxx_std_17)
-    set_target_properties(cuMMC PROPERTIES CXX_STANDARD 17)
-    set_target_properties(cuMMC PROPERTIES CMAKE_CUDA_STANDARD 11)
-    set_target_properties(cuMMC PROPERTIES CMAKE_CUDA_STANDARD_REQUIRED ON)
+    add_executable(cudaMMC)
+    target_compile_options(cudaMMC PUBLIC -Wall)
+    target_compile_features(cudaMMC PUBLIC cxx_std_17)
+    set_target_properties(cudaMMC PROPERTIES CXX_STANDARD 17)
+    set_target_properties(cudaMMC PROPERTIES CMAKE_CUDA_STANDARD 11)
+    set_target_properties(cudaMMC PROPERTIES CMAKE_CUDA_STANDARD_REQUIRED ON)
     
     if(NOT CUDA_ARCH)
       message( SEND_ERROR "YOU NEED TO SPECIFY CUDA ARCHITECTURE E.G. -DCUDA_ARCH=\"80\" " )
     endif()
 
-    set_target_properties(cuMMC PROPERTIES CUDA_ARCHITECTURES "${CUDA_ARCH}")
+    set_target_properties(cudaMMC PROPERTIES CUDA_ARCHITECTURES "${CUDA_ARCH}")
 
-    set_target_properties(cuMMC
+    set_target_properties(cudaMMC
                       PROPERTIES
                         CUDA_RUNTIME_LIBRARY static
                       )
 
-    target_include_directories(cuMMC PUBLIC 
+    target_include_directories(cudaMMC PUBLIC 
       ${CMAKE_SOURCE_DIR}/thirdparty/
       ${CMAKE_SOURCE_DIR}/include/
     )
 
-    target_sources(cuMMC PUBLIC ${SOURCES} ${HEADERS})
+    target_sources(cudaMMC PUBLIC ${SOURCES} ${HEADERS})
      
-    set_target_properties( cuMMC
+    set_target_properties( cudaMMC
                            PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
      
-    set_property(TARGET cuMMC 
+    set_property(TARGET cudaMMC 
                  PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
                #target_link_libraries(particle_test PRIVATE particles)
