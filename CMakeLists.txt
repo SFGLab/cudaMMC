@@ -52,7 +52,12 @@
     set_target_properties(cuMMC PROPERTIES CXX_STANDARD 17)
     set_target_properties(cuMMC PROPERTIES CMAKE_CUDA_STANDARD 11)
     set_target_properties(cuMMC PROPERTIES CMAKE_CUDA_STANDARD_REQUIRED ON)
-    set_target_properties(cuMMC PROPERTIES CUDA_ARCHITECTURES 60 70 75 80 86)
+    
+    if(NOT CUDA_ARCH)
+      message( SEND_ERROR "YOU NEED TO SPECIFY CUDA ARCHITECTURE E.G. -DCUDA_ARCH=\"80\" " )
+    endif()
+
+    set_target_properties(cuMMC PROPERTIES CUDA_ARCHITECTURES "${CUDA_ARCH}")
 
     set_target_properties(cuMMC
                       PROPERTIES

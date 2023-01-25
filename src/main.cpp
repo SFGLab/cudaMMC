@@ -718,13 +718,11 @@ void prepareLooper() {
 }
 
 int main(int argc, char **argv) {
-  printf("start\n");
   setbuf(stdout, NULL);
 
   // long int *tmp = NULL;
   auto tmp = chrono::high_resolution_clock::now().time_since_epoch().count();
   srand((unsigned int)tmp);
-  printf("time = %u\n", (unsigned int)tmp);
 
   opterr = 0;
   int opt = 0;
