@@ -12,10 +12,9 @@ from botocore.exceptions import ClientError
 
 class Tester:
     def __init__(self):
-        # IAM user credentials that can only read and list objects from roszcdam-gm12878-test s3 bucket
-        # and write to roszcdam-gm12878-test/results/, so you can try to mine crypto, but it won't happen :)
-        ACCESS_KEY_ID = "AKIAUIO56OEHNKBYU7GH"
-        SECRET_ACCESS_KEY = "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"
+        # IAM credentials to s3 bucket
+        ACCESS_KEY_ID = ""
+        SECRET_ACCESS_KEY = ""
 
         self.DATA_FOLDER = 'data_GM12878'
         self.BUCKET_NAME = 'roszcdam-gm12878-test'
