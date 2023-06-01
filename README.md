@@ -7,6 +7,16 @@
 * NVIDIA GPU with Pascal architecture or newer (compute capability >= 6.0)
 * CMake 3.13 or higher
 
+## Docker Instructions
+
+Start with build the image via:
+
+`sudo docker build -t cudaMMC .`
+
+and then start it interactively with
+
+`sudo docker run --rm --runtime=nvidia --gpus all -i -t cudaMMC /bin/bash`
+
 ## Compilation
 First, generate the makefile with CMake by executing the command below from the root directory of the package with your desired `path_to_build_folder` and `cuda_arch` (>= 60) values:
 ```
