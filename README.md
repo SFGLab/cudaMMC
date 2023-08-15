@@ -1,4 +1,14 @@
-# cudaMMC - Parallel Multiscale Monte Carlo approach to 3D structure modelling of a human genome
+# cudaMMC - Parallel Multiscale Monte Carlo Approach to 3D Structure Modelling of the Human Genome
+
+cudaMMC is a GPU-enhanced version of the 3D-GNOME software, which utilizes the Multiscale Monte Carlo approach for 3D chromatin structure modeling.
+
+For those interested in the previous version, it's hosted on the [Bitbucket repository](https://bitbucket.org/3dome/3dgnome).
+
+The methodology behind this tool is described in detail in the following publication:
+**Szałaj, P., Tang, Z., Michalski, P., Pietal, M. J., Luo, O. J., Sadowski, M., ... & Plewczynski, D. (2016).** *An integrated 3-dimensional genome modeling engine for data-driven simulation of spatial genome organization.* _Genome research_, 26(12), 1697-1709.
+
+For a hands-on experience and more details, cudaMMC has been integrated into the [3D-GNOME 3.0 web server](https://3dgnome.mini.pw.edu.pl/help/).
+
 
 ## System and hardware requirements
 * UNIX based Operating System
@@ -7,15 +17,17 @@
 * NVIDIA GPU with Pascal architecture or newer (compute capability >= 6.0)
 * CMake 3.13 or higher
 
+You can install cudaMMC using docker or compile it without a container:
+
 ## Docker Instructions
 
-Start with build the image via:
+Start by building the image with the following command:
 
-`sudo docker build -t cudaMMC .`
+`sudo docker build -t cudammc --progress=plain . 2>&1 | tee docker_build.log`
 
-and then start it interactively with
+and then start it with
 
-`sudo docker run --rm --runtime=nvidia --gpus all -i -t cudaMMC /bin/bash`
+`sudo docker run -v ~/Projects:/Projects --rm -it --gpus all cudammc`
 
 ## Compilation
 First, generate the makefile with CMake by executing the command below from the root directory of the package with your desired `path_to_build_folder` and `cuda_arch` (>= 60) values:
@@ -72,7 +84,11 @@ Notes
 ```
 
 ### Input and output files
-Input of the algorithm consists of several files. First of all, there are files corresponding to different types of ChIA-PET data: anchors, PET clusters and singletons. As singleton files tend to be large it is possible to provide inter- and intrachromosomal singletons files separately (using **singletons_inter** and **singletons** options, respectively). This allows the program to skip the interchromosomal files reading if they are not needed (e.g. when a single chromosome is reconstructed). When the subanchor heatmaps are to be generated it is beneficial to create the intrachromosomal singletons files for every chromosome separately (one should denote this by setting the flag **split_singleton_files_by_chr**), and to use these per-chromosome files rather than the bigger, aggregated files. These files can be easily created using a following commands:
+Input of the algorithm consists of several files. 
+First of all, there are files corresponding to different types of ChIA-PET data: anchors, PET clusters and singletons. As singleton files tend to be large it is possible to provide inter- and intrachromosomal singletons files separately (using **singletons_inter** and **singletons** options, respectively). This allows the program to skip the interchromosomal files reading if they are not needed (e.g. when a single chromosome is reconstructed). 
+When the subanchor heatmaps are to be generated it is beneficial to create the intrachromosomal singletons files for every chromosome separately (one should denote this by setting the flag **split_singleton_files_by_chr**), and to use these per-chromosome files rather than the bigger, aggregated files. 
+You can use script [extract_singletons.sh](extract_singletons.sh) for extracting singletons from files (run extract_singletons.sh -h).
+You can also extract it using awk procedures like in following commands:
 ```
 #!bash
 mkdir chr;
@@ -82,6 +98,8 @@ for i in `seq 1 22` X;
    done
 ```
 , where data.txt is the original data file. The resulting files are created in the *chr* subdirectory of the data directory, and they have the same name as the original file but with a chromosome id as a suffix.
+
+
 
 Additionally to the ChIA-PET files mentioned one can provide a BED file with centromeres' locations and a file with definition of split of the chromosomes into segments. 
 
@@ -151,3 +169,9 @@ chr12	51818625	51818729	chr12	70877421	70877572	1
 chr4	169237541	169237655	chr4	181760704	181760799	1
 chr6	129055926	129055968	chr6	129170407	129170485	1
 ```
+### Usage
+Example usage of the software is described in the [README.md](example_data%2FREADME.md).
+
+### Benchmark
+
+We provide scripts to compare time performance and modeling quality between the previous version of the software, 3D-GNOME, and cudaMMC. Check out the [benchmark](benchmark) directory for more details.
