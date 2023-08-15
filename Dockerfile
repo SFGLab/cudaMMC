@@ -14,3 +14,4 @@ RUN pip install numpy
 COPY --from=build /home/cudaMMC/cudaMMC/build/cudaMMC .
 COPY ./example_data ./example_data
 COPY ./benchmark ./benchmark
+COPY ./extract_singletons.sh ./extract_singletons.sh
