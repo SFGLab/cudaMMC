@@ -5,7 +5,8 @@ OUTPUT_DIR="chr"
 
 # Function to display help message
 display_help() {
-    echo "Usage: $0 [-c chr11,chr13 or -c chr10-chr12] [-d output_directory]"
+    echo "Usage: $0 [-i input_file] [-c chr11,chr13 or -c chr10-chr12] [-d output_directory]"
+    echo "   -i: Provide the input file from which data will be extracted."
     echo "   -c: Define chromosomes either as comma-separated list or as a range."
     echo "   -d: Define the output directory (default is 'chr')."
     echo "   -h: Display this help message."
@@ -14,7 +15,7 @@ display_help() {
 
 # Function to process the data file for given chromosomes
 process_data_file() {
-    local data_file="data.txt"
+    local data_file="$INPUT_FILE"
     local output_dir="$1"
     shift
     local chromosomes=("$@")
@@ -37,8 +38,9 @@ process_data_file() {
 }
 
 # Parse input arguments
-while getopts "c:d:h" option; do
+while getopts "i:c:d:h" option; do
     case "$option" in
+        i) INPUT_FILE="$OPTARG";;
         c) IFS="," read -ra CHROMOSOMES <<< "$OPTARG";;
         d) OUTPUT_DIR="$OPTARG";;
         h) display_help;;
