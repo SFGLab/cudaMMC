@@ -19,29 +19,26 @@ def parse_chromosomes(input_str):
 
     return [int(c.replace('chr', '')) for c in input_str.split(',')]
 
+
 class Tester:
-    def __init__(self, stg_filename, output_dir_name, method='cudaMMC', num_iter=1, num_ensemble=0,
+    def __init__(self, stg_filename, output_dir_name, method_path, num_iter=1, num_ensemble=0,
                  which_chromosomes=(1, 14, 21)):
         self.stg_init_file = stg_filename
-        self.method = method
+        self.method_path = method_path
         self.num_iter = num_iter
         self.num_ensemble = num_ensemble
         self.which_chromosomes = which_chromosomes
-        self.output_dirname = output_dir_name
-
-        if method not in ['cudaMMC', '3dnome']:
-            raise ValueError('Wrong input method!')
-
-        self.logs_path = f'logs/{self.method}_logs_tester/{self.output_dirname}_logs'
-        self.output_path = f'models/{self.method}_models_tester/{self.output_dirname}_models'
+        self.output_dirname = output_dir_name.replace('/', '').replace('\\', '')
+        self.logs_path = f'logs/{os.path.basename(self.method_path)}_logs/{self.output_dirname}_logs'
+        self.output_path = f'models/{os.path.basename(self.method_path)}_models_tester/{self.output_dirname}_models'
 
     def __ensure_directories_exist(self):
         os.makedirs(self.logs_path, exist_ok=True)
         os.makedirs(self.output_path, exist_ok=True)
 
-    def __build_command(self, chromosome):
-        command = [f'./{self.method}', '-s', self.stg_init_file, '-c', f'chr{chromosome}', '-o',
-                   f'{self.output_path}/chr{chromosome}_']
+    def __build_command(self, chromosome, iteration):
+        command = [self.method_path, '-s', self.stg_init_file, '-c', f'chr{chromosome}', '-o',
+                   f'{self.output_path}/chr{chromosome}_{iteration}/']
 
         if self.num_ensemble != 0:
             command.extend(['-m', str(self.num_ensemble)])
@@ -53,16 +50,17 @@ class Tester:
 
         for i in range(self.num_iter):
             for c in self.which_chromosomes:
-                logging.info(f'Executing {self.method} for chromosome {c}_{i}')
+                logging.info(f'Executing {os.path.basename(self.method_path)} for chromosome {c}_{i}')
                 start = time.perf_counter()
 
                 try:
-                    command = self.__build_command(c)
+                    command = self.__build_command(c, i)
+                    print(command, 'cmd!')
                     logging.info(" ".join(command))
-                    subprocess.run(command, check=True, capture_output=False)
+                    subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                 except subprocess.CalledProcessError as e:
-                    logging.error(f"{self.method} execution failed! Writing process output to dump.txt")
+                    logging.error(f"{os.path.basename(self.method_path)} execution failed! Writing process output to dump.txt")
                     with open('dump.txt', 'w') as dump:
                         dump.write(e.stdout.decode("utf-8"))
                     exit(1)
@@ -73,6 +71,8 @@ class Tester:
 
                 with open(result_file_name, 'w') as result_file:
                     result_file.write(str(duration))
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         stream=sys.stdout,
@@ -81,11 +81,10 @@ if __name__ == "__main__":
     )
 
     parser = argparse.ArgumentParser(description="Run the testing procedure.")
-
     parser.add_argument("-c", "--config_file", type=str, required=True, help="Configuration file path.")
     parser.add_argument("-o", "--output_dirname", type=str, required=True, help="Output directory name.")
-    parser.add_argument("-m", "--method_name", type=str, choices=['cudaMMC', '3dnome'], required=True,
-                        help="Method name, either 'cudaMMC' or '3dnome'.")
+    parser.add_argument("-m", "--method_path", type=str, required=True,
+                        help="Full path to the method executable. This can be the path to 'cudaMMC' or '3dnome'.")
     parser.add_argument("-i", "--iteration_number", type=int, required=True, help="Number of iterations.")
     parser.add_argument("-e", "--ensemble_number", type=int, default=1, help="Number of ensembles. Defaults to 1.")
     parser.add_argument("-d", "--which_chromosome", type=str, required=True,
@@ -102,7 +101,7 @@ if __name__ == "__main__":
     tester = Tester(
         args.config_file,
         args.output_dirname,
-        method=args.method_name,
+        method_path=args.method_path,
         num_iter=args.iteration_number,
         num_ensemble=args.ensemble_number,
         which_chromosomes=which_chromosome

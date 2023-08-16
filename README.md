@@ -7,7 +7,9 @@ For those interested in the previous version, it's hosted on the [Bitbucket repo
 The methodology behind this tool is described in detail in the following publication:
 **Szałaj, P., Tang, Z., Michalski, P., Pietal, M. J., Luo, O. J., Sadowski, M., ... & Plewczynski, D. (2016).** *An integrated 3-dimensional genome modeling engine for data-driven simulation of spatial genome organization.* _Genome research_, 26(12), 1697-1709.
 
-For a hands-on experience and more details, cudaMMC has been integrated into the [3D-GNOME 3.0 web server](https://3dgnome.mini.pw.edu.pl/help/).
+cudaMMC has been integrated into the 3D-GNOME 3.0 web server. We invite you to explore it on the [3D-GNOME 3.0 web server](https://3dgnome.mini.pw.edu.pl/).
+cudaMMC has been integrated into the 3D-GNOME 3.0 web server. We invite you to explore it on the [3D-GNOME 3.0 web server](https://3dgnome.mini.pw.edu.pl/). For a concise overview of our methodology, please refer to the help section on our web server: [3D-GNOME 3.0 web server - help](https://3dgnome.mini.pw.edu.pl/help/). In our article, we detail the usage and introduce new features for analyzing 3D chromatin models. Specifically, we discuss the impact of Structural Variation-driven changes on the 3D structure, which result in altered distances between enhancers and gene promoters. For more details, please see: [3D-GNOME 3.0: a three-dimensional genome modelling engine for analysing changes of promoter-enhancer contacts in the human genome](https://academic.oup.com/nar/article/51/W1/W5/7157515).
+
 
 
 ## System and hardware requirements
