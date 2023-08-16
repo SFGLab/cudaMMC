@@ -55,7 +55,6 @@ class Tester:
 
                 try:
                     command = self.__build_command(c, i)
-                    print(command, 'cmd!')
                     logging.info(" ".join(command))
                     subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
