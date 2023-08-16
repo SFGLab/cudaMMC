@@ -51,18 +51,6 @@ Finally, you can verify if the program has compiled properly by executing the cu
 ```
 You should see the usage message printed in the terminal.
 
-## User manual
-We have added three additional parameters under [cuda] section that can be
-specified in the config.ini configuration file. These are:
-* num threads
-* blocks multiplier
-* milestone fails.
-The num threads parameter specifies the number of CUDA threads to be launched
-per block, while blocks multiplier stands for the number of CUDA blocks
-multiplied by the number of beads in the system, as it was described in the main
-paper. Lastly, the milestone fails parameter determines after how many non
-improved milestone scores, the algorithm will stop.
-
 Example execution command:
 ```
 ./build/cudaMMC -s config.ini -c chr14 -o ~/chiapet/chr14/ -n chr14_test
@@ -169,6 +157,102 @@ chr12	51818625	51818729	chr12	70877421	70877572	1
 chr4	169237541	169237655	chr4	181760704	181760799	1
 chr6	129055926	129055968	chr6	129170407	129170485	1
 ```
+
+## User manual
+
+# cudaMMC Settings #
+There is a number of settings available for the cudaMMC simulation. We will now shortly describe the most important ones with an intuitive meaning, the full list of options will follow.
+
+We have added three additional parameters under [cuda] section that can be
+specified in the config.ini configuration file. These are:
+- num threads - this parameter specifies the number of CUDA threads to be launched per block
+- blocks multiplier - stands for the number of CUDA blocks multiplied by the number of beads in the system
+- milestone fails - this parameter determines after how many non improved milestone scores, the algorithm will stop
+
+Rest parameters are the same as in 3D-GNOME version:
+
+- freq_dist_power - this exponent describes the relation between singletons interaction frequency on a segment level and the physical distances between beads, significantly different values will yield different shapes. Different values were used in the literature. A value of -1.0 correspond to a simple inverse relation.
+- freq_dist_scale - scaling of the segment level structure 
+- genomic_dist_scale - responsible for the size of the chromatin loops
+- use_motif_orientation - whether or not to use the CTCF motif orientation
+- use_subanchor_heatmap - whether or not to use the subanchor heatmap to refine chromatin loops modeling
+
+Below a description of all the settings available is provided.
+
+##### [main]
+* output_level - set the level of output messages (range=0..10)
+* random_walk - if true then create a random walk structure on the segment level
+* loop_density - number of subanchor beads that will be placed between the consecutive anchor beads
+* use_2D - if true then the simulation is restricted to 2 dimensions
+* max_pet_length - maximal length of the PET clusters used on the subanchor level (in bp)
+* long_pet_power, long_pet_scale - describe how long PET cluster impact the segment heatmaps (scale*C^power, where C is PET count)
+
+* steps_lvl1 (lvl2, arcs, smooth) - number of simulations on the corresponding levels  (lvl1 - chromosome level, lvl2 - segments, arcs - anchor, smooth - subanchor)
+* noise_lvl1 (lvl2, arcs, smooth) - amount of noise used to create the initial structures on the corresponding levels
+
+##### [data]
+* data_dir - path of the directory with data files
+* anchors - name of the anchor file
+* clusters - names of the cluster files (comma separated)
+* factors - names of the factors used in
+* singletons - names of files with intrachromosomal singletons
+* split_singleton_files_by_chr - flag denoting whether the files in 'singletons' were splitted by chromosome  
+* singletons_inter - names of the files with interchromosomal singletons
+* segment_split - absolute path to a BED file with the segment split info
+* centromeres - absolute path to a BED file with the centromere locations
+
+##### [distance]
+* genomic_dist_power, genomic_dist_scale, genomic_dist_base - describe relationship between genomic distance and the physical distance between subanchor beads (3D dist = base+scale*d^power, where d is genomic distance in kb)
+* freq_dist_scale, freq_dist_power - describe relationship between interaction frequency and physical distance, used to generate segment level expected distances matrix (3D dist = scale*F^power, where F is interaction frequency)
+* freq_dist_scale_inter, freq_dist_power_inter - the same as freq_dist_scale, but used for the chromosome level. Allows to use different relation for segment and chromosome level.
+* count_dist_a, count_dist_scale, count_dist_shift, count_dist_base_level - describe relationship between PET count and the physical distance between subanchor beads (3D dist = base+scale/e^[a*(shift+C)], where C is PET count)
+
+##### [template]
+* template_segment - path to the file the structural template file (if any)
+* template_scale - scale for the structural template
+* dist_heatmap - path to the file the structural template file (if any)
+* dist_heatmap_scale - scale for the structural template
+
+##### [motif_orientation]
+* use_motif_orientation - whether to consider CTCF morif orientation during the simulation or not
+* weight - the weight assigned to the motif orientation energy term
+
+##### [anchor_heatmap]
+* use_anchor_heatmap - whether or not to construct the anchor heatmap to refine the anchor beads placement
+* heatmap_influence - the influence of the pairwise anchor distances matrix
+
+##### [subanchor_heatmap]
+* use_subanchor_heatmap - whether or not to construct the subanchor heatmap to refine the subanchor beads placement (i.e. chromatin loops shape and relative positions)
+* estimate_distances_steps - number of structures created to obtain the expected distance matrix
+* estimate_distances_replicates - number of simulation steps for every structure 
+* heatmap_influence - the influence of the pairwise anchor distances matrix
+* heatmap_dist_weight - the weight assigned to the expected distance matrix energy term
+
+##### [heatmaps]
+* inter_scaling - scaling factor applied to the interchromosomal contacts (segment level). This can be used  
+* distance_heatmap_stretching - used to calculate the cap value for large 3D distances (cap = average * stretching) 
+
+##### [springs]
+* stretch_constant_arcs - weight assigned to the flexibility energy term on the anchor level, when the distance is higher than expected
+* squeeze_constant_arcs - as above, but for distances smaller than expected
+* stretch_constant - as stretch_constant_arcs, but on the subanchor level
+* squeeze_constant - as squeeze_constant_arcs, but on the subanchor level
+* angular_constant - weight assigned to the bending energy term (subanchor level)
+
+##### [simulation_heatmap]
+* max_temp_heatmap - initial temperature for the simulated annealing
+* delta_temp_heatmap - temperature reduction between iterations
+* jump_temp_scale_heatmap, jump_temp_coef_heatmap - parameters to scale the probability of accepting move with higher energy
+* stop_condition_improvement_threshold_heatmap - improvement ratio that is required for the algorithm to stop (must be higher)
+* stop_condition_successes_threshold_heatmap - if the number of accepted moves during a milestone is higher than this value than the algortihm continues
+stop_condition_steps_heatmap - number of steps for each milestone
+
+##### [simulation_arcs]
+(the same as for [simulation_heatmap])
+##### [simulation_arcs_smooth]
+(the same as for [simulation_heatmap])
+
+
 ### Usage
 Example usage of the software is described in the [README.md](example_data%2FREADME.md).
 
